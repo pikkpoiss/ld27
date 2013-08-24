@@ -8,7 +8,7 @@ TODO
 ----
 
     [ ] Determine board size
-    [ ] Open window
+    [X] Open window
     [ ] Load board
     [ ] Render tiles for board
     [ ] Load player
