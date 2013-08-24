@@ -4,6 +4,36 @@ ld27
 Ludum Dare 27
 
 
+TODO
+----
+
+    [ ] Determine board size
+    [ ] Open window
+    [ ] Load board
+    [ ] Render tiles for board
+    [ ] Load player
+    [ ] Player movement
+    [ ] Bomb placement
+    [ ] Bomb detonation
+    [ ] Destructible blocks
+    [ ] Level goal
+    [ ] Timer
+    [ ] Level win
+    [ ] Level lose
+    [ ] Level timeout
+    [ ] Load enemies
+    [ ] Simple enemy AI
+    [ ] Player damage
+    [ ] Complex enemy AI
+    [ ] Level artwork
+    [ ] Player artwork
+    [ ] Enemy artwork
+    [ ] Sound effects
+    [ ] Music
+    [ ] Splash screen
+    [ ] End game screen
+    [ ] Levels?
+
 Brainstorm
 ----------
 
