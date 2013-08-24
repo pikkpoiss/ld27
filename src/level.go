@@ -17,6 +17,7 @@ package main
 import (
 	"./system"
 	"fmt"
+	"log"
 )
 
 type Level struct {
@@ -66,11 +67,11 @@ func (l *Level) Update() (err error) {
 	if layer, err = l.getLayer("tilelayer", "Tiles"); err != nil {
 		return
 	}
-	for _, a := range TILE_ANIMATIONS {
-		a.Next()
+	for _, t := range TILES {
+		t.Anim.Next()
 	}
 	for i, t := range l.tiles {
-		layer.Data[i] = TILE_ANIMATIONS[t.Type].Curr()
+		layer.Data[i] = TILES[t.Type].Anim.Curr()
 	}
 	return
 }
@@ -101,6 +102,17 @@ func (l *Level) getTileAtPixel(x int, y int) (t *Tile, err error) {
 	x = x / l.Map.Tilewidth
 	y = y / l.Map.Tileheight
 	return l.getTileAt(x, y)
+}
+
+func (l *Level) TestPixelPassable(x int, y int) bool {
+	log.Printf("testPixelPassable: %v %v ", x, y)
+	if t, err := l.getTileAtPixel(x, y); err != nil {
+		log.Printf("No tile at pixel\n")
+		return false
+	} else {
+		log.Printf("Returning t == %v\n", t)
+		return TILES[t.Type].Passable
+	}
 }
 
 func (l *Level) iToX(i int) int {
@@ -156,10 +168,24 @@ const (
 	TILE_BRICK
 )
 
-var TILE_ANIMATIONS = map[int]*system.Animation{
-	TILE_GRASS: system.Anim([]int{1}, 4),
-	TILE_STONE: system.Anim([]int{2}, 4),
-	TILE_BRICK: system.Anim([]int{3, 2}, 4),
+var TILES = map[int]TileType{
+	TILE_GRASS: TileType{
+		Anim:     system.Anim([]int{1}, 4),
+		Passable: true,
+	},
+	TILE_STONE: TileType{
+		Anim:     system.Anim([]int{2}, 4),
+		Passable: false,
+	},
+	TILE_BRICK: TileType{
+		Anim:     system.Anim([]int{3, 2}, 16),
+		Passable: false,
+	},
+}
+
+type TileType struct {
+	Anim     *system.Animation
+	Passable bool
 }
 
 type Tile struct {

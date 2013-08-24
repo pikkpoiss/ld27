@@ -77,7 +77,6 @@ func (g *Game) checkKeys() {
 
 func (g *Game) handleKeys() {
 	g.Controller.SetKeyCallback(func(key int, state int) {
-		log.Printf("handleKeys: %v %v\n", key, state)
 		switch {
 		case state == 1 && key == system.KeyUp:
 			g.Player.SetDirection(UP)
@@ -98,6 +97,8 @@ func (g *Game) handleKeys() {
 				g.Player.TestState(RIGHT) && key == system.KeyRight {
 				g.Player.SetMovement(STOPPED)
 			}
+		default:
+			log.Printf("handleKeys: %v %v\n", key, state)
 		}
 	})
 }
@@ -133,7 +134,7 @@ func (g *Game) Run() (err error) {
 			<-update.C
 			g.checkKeys()
 			g.Level.Update()
-			g.Cast.Update()
+			g.Cast.Update(g.Level)
 		}
 	}()
 	running := true

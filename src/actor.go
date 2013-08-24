@@ -17,6 +17,7 @@ package main
 import (
 	"./system"
 	"log"
+	"math"
 )
 
 type Cast struct {
@@ -45,27 +46,114 @@ func LoadCast(path string, width int, height int, th int, tw int) (c *Cast, err 
 
 func (c *Cast) AddActor(x float64, y float64, state int, offset int) (a *Actor) {
 	a = &Actor{
-		X:      x,
-		Y:      y,
-		State:  state,
-		Offset: offset,
+		X:       x,
+		Y:       y,
+		State:   state,
+		Offset:  offset,
+		Rate:    2.0,
+		Padding: 6,
 	}
 	c.Actors = append(c.Actors, a)
 	return
 }
 
-func (c *Cast) Update() {
+func (c *Cast) Update(level *Level) {
+	for _, a := range c.Actors {
+		if !a.TestState(WALKING) {
+			continue
+		}
+		switch {
+		case a.TestState(DOWN):
+			a.moveDown(level)
+		case a.TestState(UP):
+			a.moveUp(level)
+		case a.TestState(RIGHT):
+			a.moveRight(level)
+		case a.TestState(LEFT):
+			a.moveLeft(level)
+		}
+	}
 	for _, a := range ACTOR_ANIMATIONS {
 		a.Next()
 	}
 }
 
 type Actor struct {
-	X      float64
-	Y      float64
-	State  int
-	Offset int
-	FlipX  bool
+	X       float64
+	Y       float64
+	State   int
+	Offset  int
+	FlipX   bool
+	Rate    float64
+	Padding int
+}
+
+// Attempts to round X or Y values to tile boundaries if they're within Padding
+func (a *Actor) getClamped(v float64, size int) int {
+	var (
+		clamped = math.Floor(v/float64(size)+0.5) * float64(size)
+		diff    = math.Abs(clamped - v)
+	)
+	if int(diff) < a.Padding {
+		return int(clamped)
+	}
+	return int(v)
+}
+
+func (a *Actor) moveDown(l *Level) {
+	var (
+		x int
+		y int
+	)
+	x = a.getClamped(a.X, l.TileWidth)
+	y = int(a.Y + a.Rate)
+	if l.TestPixelPassable(x+a.Padding, y+l.TileHeight) &&
+		l.TestPixelPassable(x+l.TileWidth-a.Padding, y+l.TileHeight) {
+		a.X = float64(x)
+		a.Y = float64(y)
+	}
+}
+
+func (a *Actor) moveUp(l *Level) {
+	var (
+		x int
+		y int
+	)
+	x = a.getClamped(a.X, l.TileWidth)
+	y = int(a.Y - a.Rate)
+	if l.TestPixelPassable(x+a.Padding, y) &&
+		l.TestPixelPassable(x+l.TileWidth-a.Padding, y) {
+		a.X = float64(x)
+		a.Y = float64(y)
+	}
+}
+
+func (a *Actor) moveRight(l *Level) {
+	var (
+		x int
+		y int
+	)
+	x = int(a.X + a.Rate)
+	y = a.getClamped(a.Y, l.TileHeight)
+	if l.TestPixelPassable(x+l.TileWidth, y+a.Padding) &&
+		l.TestPixelPassable(x+l.TileWidth, y+l.TileHeight-a.Padding) {
+		a.X = float64(x)
+		a.Y = float64(y)
+	}
+}
+
+func (a *Actor) moveLeft(l *Level) {
+	var (
+		x int
+		y int
+	)
+	x = int(a.X - a.Rate)
+	y = a.getClamped(a.Y, l.TileHeight)
+	if l.TestPixelPassable(x, y+a.Padding) &&
+		l.TestPixelPassable(x, y+l.TileHeight-a.Padding) {
+		a.X = float64(x)
+		a.Y = float64(y)
+	}
 }
 
 const UNSET_MASK = 1<<10 - 1
@@ -94,7 +182,7 @@ func (a *Actor) SetMovement(mov int) {
 }
 
 func (a *Actor) TestState(state int) bool {
-	return a.State & state == state
+	return a.State&state == state
 }
 
 func (a *Actor) GetFrame() int {
