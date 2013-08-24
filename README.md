@@ -10,7 +10,7 @@ TODO
     [X] Determine board size
     [X] Open window
     [X] Load board
-    [ ] Render tiles for board
+    [X] Render tiles for board
     [ ] Load player
     [ ] Player movement
     [ ] Bomb placement
