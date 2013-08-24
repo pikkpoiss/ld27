@@ -38,6 +38,7 @@ func LoadLevel(path string) (out *Level, err error) {
 		ch    float64
 		tiles []Tile
 	)
+	log.Printf("Loading level from %v\n", path)
 	if tm, err = system.LoadMap(path); err != nil {
 		return
 	}
@@ -105,12 +106,9 @@ func (l *Level) getTileAtPixel(x int, y int) (t *Tile, err error) {
 }
 
 func (l *Level) TestPixelPassable(x int, y int) bool {
-	log.Printf("testPixelPassable: %v %v ", x, y)
 	if t, err := l.getTileAtPixel(x, y); err != nil {
-		log.Printf("No tile at pixel\n")
 		return false
 	} else {
-		log.Printf("Returning t == %v\n", t)
 		return TILES[t.Type].Passable
 	}
 }

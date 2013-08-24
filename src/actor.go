@@ -31,7 +31,7 @@ type Cast struct {
 
 func LoadCast(path string, width int, height int, th int, tw int) (c *Cast, err error) {
 	var t *system.Texture
-	if t, err = system.LoadTexture(path, system.IntNearest, width); err != nil {
+	if t, err = system.LoadTexture(path, system.IntNearest, width, height); err != nil {
 		return
 	}
 	c = &Cast{
@@ -51,7 +51,7 @@ func (c *Cast) AddActor(x float64, y float64, state int, offset int) (a *Actor) 
 		State:   state,
 		Offset:  offset,
 		Rate:    2.0,
-		Padding: 16,
+		Padding: 12,
 	}
 	c.Actors = append(c.Actors, a)
 	return
@@ -106,7 +106,12 @@ func (a *Actor) moveDown(l *Level) {
 		y int
 	)
 	x = a.getClamped(a.X, l.TileWidth)
-	y = int(a.Y + a.Rate)
+	if (x == int(a.X)) {
+		// Only move once we've clamped.
+		y = int(a.Y + a.Rate)
+	} else {
+		y = int(a.Y)
+	}
 	if l.TestPixelPassable(x+a.Padding, y+l.TileHeight) &&
 		l.TestPixelPassable(x+l.TileWidth-a.Padding, y+l.TileHeight) {
 		a.X = float64(x)
@@ -120,7 +125,12 @@ func (a *Actor) moveUp(l *Level) {
 		y int
 	)
 	x = a.getClamped(a.X, l.TileWidth)
-	y = int(a.Y - a.Rate)
+	if (x == int(a.X)) {
+		// Only move once we've clamped.
+		y = int(a.Y - a.Rate)
+	} else {
+		y = int(a.Y)
+	}
 	if l.TestPixelPassable(x+a.Padding, y) &&
 		l.TestPixelPassable(x+l.TileWidth-a.Padding, y) {
 		a.X = float64(x)
@@ -133,8 +143,13 @@ func (a *Actor) moveRight(l *Level) {
 		x int
 		y int
 	)
-	x = int(a.X + a.Rate)
 	y = a.getClamped(a.Y, l.TileHeight)
+	if (y == int(a.Y)) {
+		// Only move once we've clamped.
+		x = int(a.X + a.Rate)
+	} else {
+		x = int(a.X)
+	}
 	if l.TestPixelPassable(x+l.TileWidth, y+a.Padding) &&
 		l.TestPixelPassable(x+l.TileWidth, y+l.TileHeight-a.Padding) {
 		a.X = float64(x)
@@ -147,8 +162,13 @@ func (a *Actor) moveLeft(l *Level) {
 		x int
 		y int
 	)
-	x = int(a.X - a.Rate)
 	y = a.getClamped(a.Y, l.TileHeight)
+	if (y == int(a.Y)) {
+		// Only move once we've clamped.
+		x = int(a.X - a.Rate)
+	} else {
+		x = int(a.X)
+	}
 	if l.TestPixelPassable(x, y+a.Padding) &&
 		l.TestPixelPassable(x, y+l.TileHeight-a.Padding) {
 		a.X = float64(x)

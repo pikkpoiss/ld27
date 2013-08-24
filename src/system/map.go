@@ -88,7 +88,7 @@ func LoadMap(path string) (out *TiledMap, err error) {
 	}
 	for i, ts := range tm.Tilesets {
 		tspath := filepath.Join(filepath.Dir(path), ts.Image)
-		if tm.Tilesets[i].Texture, err = LoadTexture(tspath, IntNearest, ts.Tilewidth); err != nil {
+		if tm.Tilesets[i].Texture, err = LoadTexture(tspath, IntNearest, ts.Tilewidth, ts.Tileheight); err != nil {
 			return
 		}
 		// The following ignores spacing, but I don't use it.

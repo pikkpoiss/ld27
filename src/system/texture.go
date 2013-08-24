@@ -33,7 +33,7 @@ type Texture struct {
 	Frames  [][]int
 }
 
-func LoadTexture(path string, smoothing int, framewidth int) (texture *Texture, err error) {
+func LoadTexture(path string, smoothing int, framewidth int, frameheight int) (texture *Texture, err error) {
 	var (
 		img    image.Image
 		bounds image.Rectangle
@@ -53,60 +53,20 @@ func LoadTexture(path string, smoothing int, framewidth int) (texture *Texture, 
 		Height:  bounds.Dy(),
 		Frames:  make([][]int, 0),
 	}
-	frames := bounds.Dx() / framewidth
+	frames := bounds.Dx() / framewidth * bounds.Dy() / frameheight
 	for i := 0; i < frames; i++ {
+		var (
+			minx = (i * framewidth) % bounds.Dx()
+			maxx = minx + framewidth
+			miny = ((i * framewidth) / bounds.Dx() - 1) * frameheight
+			maxy = miny + frameheight
+		)
 		texture.Frames = append(texture.Frames, []int{
-			i * framewidth,
-			(i + 1) * framewidth,
+			minx,
+			maxx,
+			miny,
+			maxy,
 		})
-	}
-	return
-}
-
-func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err error) {
-	var (
-		img   image.Image
-		trim  *image.NRGBA
-		gltex gl.Texture
-	)
-	if img, err = loadPNG(path); err != nil {
-		return
-	}
-	var (
-		bounds     = img.Bounds()
-		trimbounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy()-1)
-		trimpoint  = image.Pt(0, 1)
-	)
-	trim = image.NewNRGBA(trimbounds)
-	draw.Draw(trim, trimbounds, img, trimpoint, draw.Src)
-	if gltex, err = getGLTexture(trim, smoothing); err != nil {
-		return
-	}
-	texture = &Texture{
-		texture: gltex,
-		Width:   trimbounds.Dx(),
-		Height:  trimbounds.Dy(),
-		Frames:  make([][]int, 0),
-	}
-	var (
-		aprime uint32 = 0
-		pair          = make([]int, 2)
-		x             = 0
-	)
-	for ; x < bounds.Dx(); x++ {
-		_, _, _, a := img.At(x, 0).RGBA()
-		if aprime == 0 && a > 0 {
-			pair[0] = x
-		} else if aprime > 0 && a == 0 {
-			pair[1] = x
-			texture.Frames = append(texture.Frames, pair)
-			pair = make([]int, 2)
-		}
-		aprime = a
-	}
-	if pair[0] != 0 {
-		pair[1] = x
-		texture.Frames = append(texture.Frames, pair)
 	}
 	return
 }
@@ -117,6 +77,14 @@ func (t *Texture) MinX(i int) float64 {
 
 func (t *Texture) MaxX(i int) float64 {
 	return float64(t.Frames[i][1]) / float64(t.Width)
+}
+
+func (t *Texture) MinY(i int) float64 {
+	return float64(t.Frames[i][2]) / float64(t.Height)
+}
+
+func (t *Texture) MaxY(i int) float64 {
+	return float64(t.Frames[i][3]) / float64(t.Height)
 }
 
 func (t *Texture) Bind() {
