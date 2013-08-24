@@ -55,6 +55,8 @@ func (c *Controller) Open(win *Window) (err error) {
 	}
 	gl.Init()
 	gl.Enable(gl.TEXTURE_2D)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	v1, v2, v3 := glfw.GLVersion()
 	log.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fb_supported := glfw.ExtensionSupported("GL_EXT_framebuffer_object")

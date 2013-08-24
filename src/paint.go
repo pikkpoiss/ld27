@@ -29,6 +29,25 @@ func EndPaint() {
 	glfw.SwapBuffers()
 }
 
+func PaintCast(ctrl *system.Controller, c *Cast) {
+	c.Texture.Bind()
+	for _, a := range c.Actors {
+		var (
+			minx = int(a.X) - c.OffsetX
+			miny = int(a.Y) - c.OffsetY
+			maxx = minx + c.Width
+			maxy = miny + c.Height
+		)
+		if a.FlipX {
+			maxx ^= minx
+			minx ^= maxx
+			maxx ^= minx
+		}
+		paintSprite(minx, miny, maxx, maxy, c.Texture, a.GetFrame())
+	}
+	c.Texture.Unbind()
+}
+
 func PaintMap(ctrl *system.Controller, tm *system.TiledMap) {
 	var x int
 	var y int
@@ -55,6 +74,21 @@ func PaintMap(ctrl *system.Controller, tm *system.TiledMap) {
 	}
 }
 
+func paintSprite(minx int, miny int, maxx int, maxy int, t *system.Texture, index int) {
+	gl.MatrixMode(gl.TEXTURE)
+	gl.Begin(gl.QUADS)
+	gl.TexCoord2d(t.MinX(index), 1)
+	gl.Vertex2i(minx, miny)
+	gl.TexCoord2d(t.MaxX(index), 1)
+	gl.Vertex2i(maxx, miny)
+	gl.TexCoord2d(t.MaxX(index), 0)
+	gl.Vertex2i(maxx, maxy)
+	gl.TexCoord2d(t.MinX(index), 0)
+	gl.Vertex2i(minx, maxy)
+	gl.End()
+	gl.MatrixMode(gl.MODELVIEW)
+}
+
 func paintTile(x int, y int, w int, h int, t *system.Texture, index int) {
 	var (
 		minx = x * w
@@ -62,16 +96,5 @@ func paintTile(x int, y int, w int, h int, t *system.Texture, index int) {
 		maxx = (x + 1) * w
 		maxy = (y + 1) * h
 	)
-	gl.MatrixMode(gl.TEXTURE)
-	gl.Begin(gl.QUADS)
-	gl.TexCoord2d(t.MinX(index), 0)
-	gl.Vertex2i(minx, miny)
-	gl.TexCoord2d(t.MaxX(index), 0)
-	gl.Vertex2i(maxx, miny)
-	gl.TexCoord2d(t.MaxX(index), 1)
-	gl.Vertex2i(maxx, maxy)
-	gl.TexCoord2d(t.MinX(index), 1)
-	gl.Vertex2i(minx, maxy)
-	gl.End()
-	gl.MatrixMode(gl.MODELVIEW)
+	paintSprite(minx, miny, maxx, maxy, t, index)
 }

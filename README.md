@@ -14,7 +14,7 @@ TODO
     [X] Tile system
     [X] Parse board metadata
     [X] Animations
-    [ ] Load player
+    [X] Load player
     [ ] Player movement
     [ ] Bomb placement
     [ ] Bomb detonation

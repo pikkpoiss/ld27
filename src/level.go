@@ -20,11 +20,14 @@ import (
 )
 
 type Level struct {
-	Map         *system.TiledMap
-	Camera      *Camera
-	PlayerStart *Tile
-	Goal        *Tile
-	tiles       []Tile
+	Map        *system.TiledMap
+	Camera     *Camera
+	StartX     int
+	StartY     int
+	Goal       *Tile
+	tiles      []Tile
+	TileWidth  int
+	TileHeight int
 }
 
 func LoadLevel(path string) (out *Level, err error) {
@@ -41,9 +44,11 @@ func LoadLevel(path string) (out *Level, err error) {
 	ch = float64(tm.Height * tm.Tileheight)
 	tiles = make([]Tile, tm.Width*tm.Height)
 	out = &Level{
-		Map:    tm,
-		Camera: NewCamera(0, 0, cw, ch),
-		tiles:  tiles,
+		Map:        tm,
+		Camera:     NewCamera(0, 0, cw, ch),
+		TileWidth:  tm.Tilewidth,
+		TileHeight: tm.Tileheight,
+		tiles:      tiles,
 	}
 	if err = out.parseTiles(); err != nil {
 		return
@@ -133,7 +138,8 @@ func (l *Level) parseObjects() (err error) {
 	for _, obj := range layer.Objects {
 		switch obj.Type {
 		case "player":
-			l.PlayerStart, err = l.getTileAtPixel(obj.X, obj.Y)
+			l.StartX = obj.X
+			l.StartY = obj.Y
 		case "goal":
 			l.Goal, err = l.getTileAtPixel(obj.X, obj.Y)
 		}

@@ -38,5 +38,5 @@ func NewCamera(x float64, y float64, w float64, h float64) (c *Camera) {
 func (c *Camera) SetProjection() {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	gl.Ortho(c.x, c.x+c.w, c.y, c.y+c.h, 1, -1)
+	gl.Ortho(c.x, c.x+c.w, c.y+c.h, c.y, 1, -1)
 }

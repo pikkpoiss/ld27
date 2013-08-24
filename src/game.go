@@ -34,6 +34,8 @@ type Game struct {
 	Maps       []string
 	Level      *Level
 	Camera     *Camera
+	Cast       *Cast
+	Player     *Actor
 	exit       chan bool
 }
 
@@ -48,7 +50,13 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	game.Controller.SetClearColor(BG_R, BG_G, BG_B, BG_A)
 	game.handleKeys()
 	game.handleClose()
-	err = game.SetLevel(0)
+	if err = game.setLevel(0); err != nil {
+		return
+	}
+	if err = game.setCast("data/actors.png", 32, 64); err != nil {
+		return
+	}
+	game.setPlayer()
 	return
 }
 
@@ -70,10 +78,31 @@ func (g *Game) checkKeys() {
 func (g *Game) handleKeys() {
 	g.Controller.SetKeyCallback(func(key int, state int) {
 		log.Printf("handleKeys: %v %v\n", key, state)
+		switch {
+		case state == 1 && key == system.KeyUp:
+			g.Player.SetDirection(UP)
+			g.Player.SetMovement(WALKING)
+		case state == 1 && key == system.KeyDown:
+			g.Player.SetDirection(DOWN)
+			g.Player.SetMovement(WALKING)
+		case state == 1 && key == system.KeyLeft:
+			g.Player.SetDirection(LEFT)
+			g.Player.SetMovement(WALKING)
+		case state == 1 && key == system.KeyRight:
+			g.Player.SetDirection(RIGHT)
+			g.Player.SetMovement(WALKING)
+		case state == 0:
+			if g.Player.TestState(UP) && key == system.KeyUp ||
+				g.Player.TestState(DOWN) && key == system.KeyDown ||
+				g.Player.TestState(LEFT) && key == system.KeyLeft ||
+				g.Player.TestState(RIGHT) && key == system.KeyRight {
+				g.Player.SetMovement(STOPPED)
+			}
+		}
 	})
 }
 
-func (g *Game) SetLevel(i int) (err error) {
+func (g *Game) setLevel(i int) (err error) {
 	var (
 		index = (i + len(g.Maps)) % len(g.Maps)
 		path  = g.Maps[index]
@@ -84,6 +113,19 @@ func (g *Game) SetLevel(i int) (err error) {
 	return
 }
 
+func (g *Game) setCast(path string, width int, height int) (err error) {
+	g.Cast, err = LoadCast(path, width, height, g.Level.TileWidth, g.Level.TileHeight)
+	return
+}
+
+func (g *Game) setPlayer() {
+	var (
+		x = float64(g.Level.StartX)
+		y = float64(g.Level.StartY)
+	)
+	g.Player = g.Cast.AddActor(x, y, DOWN|STOPPED, 0)
+}
+
 func (g *Game) Run() (err error) {
 	go func() {
 		update := time.NewTicker(time.Second / time.Duration(UPDATE_HZ))
@@ -91,6 +133,7 @@ func (g *Game) Run() (err error) {
 			<-update.C
 			g.checkKeys()
 			g.Level.Update()
+			g.Cast.Update()
 		}
 	}()
 	running := true
@@ -100,6 +143,7 @@ func (g *Game) Run() (err error) {
 		g.Level.Camera.SetProjection()
 		BeginPaint()
 		PaintMap(g.Controller, g.Level.Map)
+		PaintCast(g.Controller, g.Cast)
 		EndPaint()
 		select {
 		case <-g.exit:
