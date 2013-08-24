@@ -11,6 +11,9 @@ TODO
     [X] Open window
     [X] Load board
     [X] Render tiles for board
+    [X] Tile system
+    [X] Parse board metadata
+    [X] Animations
     [ ] Load player
     [ ] Player movement
     [ ] Bomb placement

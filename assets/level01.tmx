@@ -3,9 +3,13 @@
  <tileset firstgid="1" name="tiles-level" tilewidth="32" tileheight="32">
   <image source="../data/tiles-level.png" width="320" height="32"/>
  </tileset>
- <layer name="Tile Layer 1" width="15" height="11">
+ <layer name="Tiles" width="15" height="11">
   <data encoding="base64" compression="zlib">
    eJxjYmBgYKIAM0IxMxKbEB9ZLxNUDplPiMZnLz43oNtLKg1zKzMWs5kpsJeQ/5mwmElKOJMavtjCGdl8fGGOrJdcDABmBwES
   </data>
  </layer>
+ <objectgroup name="Players" width="15" height="11">
+  <object name="Player" type="player" x="32" y="32" width="32" height="32"/>
+  <object name="Goal" type="goal" x="416" y="288" width="32" height="32"/>
+ </objectgroup>
 </map>

@@ -39,6 +39,9 @@ func PaintMap(ctrl *system.Controller, tm *system.TiledMap) {
 		th = ts.Tileheight
 		ts.Texture.Bind()
 		for _, l := range tm.Layers {
+			if l.Type != "tilelayer" {
+				continue
+			}
 			for i, gid := range l.Data {
 				//log.Printf("PaintMap %v %v %v\n", gid, ts.Firstgid, ts.Lastgid)
 				if gid >= ts.Firstgid && gid < ts.Lastgid {

@@ -32,7 +32,7 @@ const (
 type Game struct {
 	Controller *system.Controller
 	Maps       []string
-	Map        *system.TiledMap
+	Level      *Level
 	Camera     *Camera
 	exit       chan bool
 }
@@ -48,7 +48,7 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	game.Controller.SetClearColor(BG_R, BG_G, BG_B, BG_A)
 	game.handleKeys()
 	game.handleClose()
-	err = game.SetMap(0)
+	err = game.SetLevel(0)
 	return
 }
 
@@ -73,15 +73,14 @@ func (g *Game) handleKeys() {
 	})
 }
 
-func (g *Game) SetMap(i int) (err error) {
+func (g *Game) SetLevel(i int) (err error) {
 	var (
 		index = (i + len(g.Maps)) % len(g.Maps)
 		path  = g.Maps[index]
 	)
-	if g.Map, err = system.LoadMap(path); err != nil {
+	if g.Level, err = LoadLevel(path); err != nil {
 		return
 	}
-	g.Camera = NewCamera(0, 0, float64(g.Map.Width*g.Map.Tilewidth), float64(g.Map.Height*g.Map.Tileheight))
 	return
 }
 
@@ -91,15 +90,16 @@ func (g *Game) Run() (err error) {
 		for true {
 			<-update.C
 			g.checkKeys()
+			g.Level.Update()
 		}
 	}()
 	running := true
 	paint := time.NewTicker(time.Second / time.Duration(PAINT_HZ))
 	for running == true {
 		<-paint.C
-		g.Camera.SetProjection()
+		g.Level.Camera.SetProjection()
 		BeginPaint()
-		PaintMap(g.Controller, g.Map)
+		PaintMap(g.Controller, g.Level.Map)
 		EndPaint()
 		select {
 		case <-g.exit:
