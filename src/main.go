@@ -31,7 +31,7 @@ func main() {
 		err  error
 		win  *system.Window
 		ctrl *system.Controller
-		//snd  *system.Sound
+		snd  *system.Sound
 		game *Game
 	)
 	flag.Parse()
@@ -39,13 +39,11 @@ func main() {
 		log.Fatalf("Couldn't init Controller: %v\n", err)
 	}
 	defer ctrl.Terminate()
-	/*
 	if snd, err = system.NewSound(); err != nil {
 		log.Fatalf("Couldn't init Sound: %v\n", err)
 	}
 	defer snd.Terminate()
-	*/
-	win = &system.Window{Width: 1136, Height: 640, Resize: false}
+	win = &system.Window{Width: 960, Height: 704, Resize: false}
 	if err = ctrl.Open(win); err != nil {
 		log.Fatalf("Couldn't open Window: %v\n", err)
 	}

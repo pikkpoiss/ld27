@@ -54,6 +54,7 @@ func (c *Controller) Open(win *Window) (err error) {
 		return
 	}
 	gl.Init()
+	gl.Enable(gl.TEXTURE_2D)
 	v1, v2, v3 := glfw.GLVersion()
 	log.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fb_supported := glfw.ExtensionSupported("GL_EXT_framebuffer_object")
@@ -106,11 +107,4 @@ func (c *Controller) SetKeyCallback(handler KeyHandler) {
 // Check whether a key is pressed.
 func (c *Controller) Key(key int) int {
 	return glfw.Key(key)
-}
-
-// Paints the controller.
-func (c *Controller) Paint() {
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gl.Flush()
-	glfw.SwapBuffers()
 }

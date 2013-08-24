@@ -7,9 +7,9 @@ Ludum Dare 27
 TODO
 ----
 
-    [ ] Determine board size
+    [X] Determine board size
     [X] Open window
-    [ ] Load board
+    [X] Load board
     [ ] Render tiles for board
     [ ] Load player
     [ ] Player movement

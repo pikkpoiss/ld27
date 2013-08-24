@@ -31,17 +31,24 @@ const (
 
 type Game struct {
 	Controller *system.Controller
+	Maps       []string
+	Map        *system.TiledMap
+	Camera     *Camera
 	exit       chan bool
 }
 
 func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	game = &Game{
 		Controller: ctrl,
-		exit:       make(chan bool, 1),
+		Maps: []string{
+			"data/level01.json",
+		},
+		exit: make(chan bool, 1),
 	}
 	game.Controller.SetClearColor(BG_R, BG_G, BG_B, BG_A)
 	game.handleKeys()
 	game.handleClose()
+	err = game.SetMap(0)
 	return
 }
 
@@ -66,6 +73,18 @@ func (g *Game) handleKeys() {
 	})
 }
 
+func (g *Game) SetMap(i int) (err error) {
+	var (
+		index = (i + len(g.Maps)) % len(g.Maps)
+		path  = g.Maps[index]
+	)
+	if g.Map, err = system.LoadMap(path); err != nil {
+		return
+	}
+	g.Camera = NewCamera(0, 0, float64(g.Map.Width*g.Map.Tilewidth), float64(g.Map.Height*g.Map.Tileheight))
+	return
+}
+
 func (g *Game) Run() (err error) {
 	go func() {
 		update := time.NewTicker(time.Second / time.Duration(UPDATE_HZ))
@@ -78,7 +97,10 @@ func (g *Game) Run() (err error) {
 	paint := time.NewTicker(time.Second / time.Duration(PAINT_HZ))
 	for running == true {
 		<-paint.C
-		g.Controller.Paint()
+		g.Camera.SetProjection()
+		BeginPaint()
+		PaintMap(g.Controller, g.Map)
+		EndPaint()
 		select {
 		case <-g.exit:
 			paint.Stop()
