@@ -19,6 +19,7 @@ import (
 	"github.com/go-gl/gl"
 )
 
+// Buffer to draw to in case we want to manipulate output.
 type Framebuffer struct {
 	Buffer  gl.Framebuffer
 	Texture gl.Texture
@@ -26,6 +27,7 @@ type Framebuffer struct {
 	Height  int
 }
 
+// Creates a new Framebuffer.
 func NewFramebuffer(w int, h int) (fb *Framebuffer, err error) {
 	var (
 		buffer  gl.Framebuffer
@@ -53,11 +55,13 @@ func NewFramebuffer(w int, h int) (fb *Framebuffer, err error) {
 	return
 }
 
+// Cleans up after the framebuffer.
 func (fb *Framebuffer) Dispose() {
 	fb.Buffer.Delete()
 	fb.Texture.Delete()
 }
 
+// Binds the framebuffer for drawing.
 func (fb *Framebuffer) Bind() {
 	fb.Buffer.Bind()
 	gl.Viewport(0, 0, fb.Width, fb.Height)
@@ -67,10 +71,12 @@ func (fb *Framebuffer) Bind() {
 	gl.Enable(gl.BLEND)
 }
 
+// Unbinds the framebuffer.
 func (fb *Framebuffer) Unbind() {
 	fb.Buffer.Unbind()
 }
 
+// Draws the contents of the framebuffer at the requested width and height.
 func (fb *Framebuffer) Draw(w int, h int) {
 	gl.Viewport(0, 0, w, h)
 	gl.MatrixMode(gl.PROJECTION)

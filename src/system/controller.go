@@ -20,10 +20,18 @@ import (
 	"log"
 )
 
+// Handles window close events.
+type CloseHandler func() int
+
+// Handles key press events.
+type KeyHandler func(key int, state int)
+
+// Main system controller.
 type Controller struct {
 	Win *Window
 }
 
+// Creates an initialized controller.
 func NewController() (c *Controller, err error) {
 	if err = glfw.Init(); err != nil {
 		return
@@ -32,9 +40,7 @@ func NewController() (c *Controller, err error) {
 	return
 }
 
-/**
- * Opens a window with the given parameterc.
- */
+// Opens a new window.
 func (c *Controller) Open(win *Window) (err error) {
 	c.Win = win
 	mode := glfw.Windowed
@@ -85,4 +91,26 @@ func (c *Controller) clamp(i int, max int) gl.GLclampf {
 func (c *Controller) SetClearColor(r int, g int, b int, a int) {
 	gl.ClearColor(c.clamp(r, 255), c.clamp(g, 255), c.clamp(b, 255), c.clamp(a, 255))
 	gl.ClearDepth(1.0)
+}
+
+// Specify a function to call when the window is closed.
+func (c *Controller) SetCloseCallback(handler CloseHandler) {
+	glfw.SetWindowCloseCallback(glfw.WindowCloseHandler(handler))
+}
+
+// Specify a function to call when a key is pressed.
+func (c *Controller) SetKeyCallback(handler KeyHandler) {
+	glfw.SetKeyCallback(glfw.KeyHandler(handler))
+}
+
+// Check whether a key is pressed.
+func (c *Controller) Key(key int) int {
+	return glfw.Key(key)
+}
+
+// Paints the controller.
+func (c *Controller) Paint() {
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	gl.Flush()
+	glfw.SwapBuffers()
 }
