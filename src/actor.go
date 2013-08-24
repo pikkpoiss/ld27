@@ -51,7 +51,7 @@ func (c *Cast) AddActor(x float64, y float64, state int, offset int) (a *Actor) 
 		State:   state,
 		Offset:  offset,
 		Rate:    2.0,
-		Padding: 6,
+		Padding: 16,
 	}
 	c.Actors = append(c.Actors, a)
 	return
@@ -94,7 +94,7 @@ func (a *Actor) getClamped(v float64, size int) int {
 		clamped = math.Floor(v/float64(size)+0.5) * float64(size)
 		diff    = math.Abs(clamped - v)
 	)
-	if int(diff) < a.Padding {
+	if int(diff) <= a.Padding {
 		return int(clamped)
 	}
 	return int(v)

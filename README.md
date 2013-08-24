@@ -15,13 +15,15 @@ TODO
     [X] Parse board metadata
     [X] Animations
     [X] Load player
-    [ ] Player movement
+    [X] Player movement
     [ ] Bomb placement
     [ ] Bomb detonation
     [ ] Destructible blocks
     [ ] Level goal
     [ ] Timer
     [ ] Level win
+    [ ] Player damage
+    [ ] Health indicator
     [ ] Level lose
     [ ] Level timeout
     [ ] Load enemies
