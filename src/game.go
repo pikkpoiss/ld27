@@ -35,7 +35,7 @@ type Game struct {
 	Level      *Level
 	Camera     *Camera
 	Cast       *Cast
-	Player     *Actor
+	Player     *Player
 	exit       chan bool
 }
 
@@ -70,7 +70,7 @@ func (g *Game) handleClose() {
 func (g *Game) checkKeys() {
 	switch {
 	case g.Controller.Key(system.KeySpace) == 1:
-		log.Printf("Space\n")
+	case g.Controller.Key(system.KeyEsc) == 1:
 		g.exit <- true
 	}
 }
@@ -91,11 +91,20 @@ func (g *Game) handleKeys() {
 			g.Player.SetDirection(RIGHT)
 			g.Player.SetMovement(WALKING)
 		case state == 0:
-			if g.Player.TestState(UP) && key == system.KeyUp ||
+			switch {
+			case g.Player.TestState(UP) && key == system.KeyUp ||
 				g.Player.TestState(DOWN) && key == system.KeyDown ||
 				g.Player.TestState(LEFT) && key == system.KeyLeft ||
-				g.Player.TestState(RIGHT) && key == system.KeyRight {
+				g.Player.TestState(RIGHT) && key == system.KeyRight:
 				g.Player.SetMovement(STOPPED)
+			case key == system.KeySpace:
+				var (
+					x = int(g.Player.X() + float64(g.Level.TileWidth) / 2.0)
+					y = int(g.Player.Y() + float64(g.Level.TileHeight) / 2.0)
+				)
+				if b, _ := g.Level.AddBombAtPixel(x, y); b != nil {
+					g.Cast.AddActor(b)
+				}
 			}
 		default:
 			log.Printf("handleKeys: %v %v\n", key, state)
@@ -124,7 +133,8 @@ func (g *Game) setPlayer() {
 		x = float64(g.Level.StartX)
 		y = float64(g.Level.StartY)
 	)
-	g.Player = g.Cast.AddActor(x, y, DOWN|STOPPED, 0)
+	g.Player = NewPlayer(x, y, DOWN|STOPPED, 0)
+	g.Cast.AddActor(g.Player)
 }
 
 func (g *Game) Run() (err error) {

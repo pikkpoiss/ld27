@@ -33,17 +33,18 @@ func PaintCast(ctrl *system.Controller, c *Cast) {
 	c.Texture.Bind()
 	for _, a := range c.Actors {
 		var (
-			minx = int(a.X) - c.OffsetX
-			miny = int(a.Y) - c.OffsetY
-			maxx = minx + c.Width
-			maxy = miny + c.Height
+			minx  = int(a.X()) - c.OffsetX
+			miny  = int(a.Y()) - c.OffsetY
+			maxx  = minx + c.Width
+			maxy  = miny + c.Height
+			frame = a.GetFrame() + c.TextureCols*a.TextureRow()
 		)
-		if a.FlipX {
+		if a.FlipX() {
 			maxx ^= minx
 			minx ^= maxx
 			maxx ^= minx
 		}
-		paintSprite(minx, miny, maxx, maxy, c.Texture, a.GetFrame())
+		paintSprite(minx, miny, maxx, maxy, c.Texture, frame)
 	}
 	c.Texture.Unbind()
 }
@@ -77,13 +78,13 @@ func PaintMap(ctrl *system.Controller, tm *system.TiledMap) {
 func paintSprite(minx int, miny int, maxx int, maxy int, t *system.Texture, index int) {
 	gl.MatrixMode(gl.TEXTURE)
 	gl.Begin(gl.QUADS)
-	gl.TexCoord2d(t.MinX(index), t.MaxY(index))
-	gl.Vertex2i(minx, miny)
-	gl.TexCoord2d(t.MaxX(index), t.MaxY(index))
-	gl.Vertex2i(maxx, miny)
-	gl.TexCoord2d(t.MaxX(index), t.MinY(index))
-	gl.Vertex2i(maxx, maxy)
 	gl.TexCoord2d(t.MinX(index), t.MinY(index))
+	gl.Vertex2i(minx, miny)
+	gl.TexCoord2d(t.MaxX(index), t.MinY(index))
+	gl.Vertex2i(maxx, miny)
+	gl.TexCoord2d(t.MaxX(index), t.MaxY(index))
+	gl.Vertex2i(maxx, maxy)
+	gl.TexCoord2d(t.MinX(index), t.MaxY(index))
 	gl.Vertex2i(minx, maxy)
 	gl.End()
 	gl.MatrixMode(gl.MODELVIEW)

@@ -27,6 +27,7 @@ type Level struct {
 	StartY     int
 	Goal       *Tile
 	tiles      []Tile
+	bombs      []*Bomb
 	TileWidth  int
 	TileHeight int
 }
@@ -37,6 +38,7 @@ func LoadLevel(path string) (out *Level, err error) {
 		cw    float64
 		ch    float64
 		tiles []Tile
+		bombs []*Bomb
 	)
 	log.Printf("Loading level from %v\n", path)
 	if tm, err = system.LoadMap(path); err != nil {
@@ -45,12 +47,14 @@ func LoadLevel(path string) (out *Level, err error) {
 	cw = float64(tm.Width * tm.Tilewidth)
 	ch = float64(tm.Height * tm.Tileheight)
 	tiles = make([]Tile, tm.Width*tm.Height)
+	bombs = make([]*Bomb, tm.Width*tm.Height)
 	out = &Level{
 		Map:        tm,
 		Camera:     NewCamera(0, 0, cw, ch),
 		TileWidth:  tm.Tilewidth,
 		TileHeight: tm.Tileheight,
 		tiles:      tiles,
+		bombs:      bombs,
 	}
 	if err = out.parseTiles(); err != nil {
 		return
@@ -77,6 +81,33 @@ func (l *Level) Update() (err error) {
 	return
 }
 
+func (l *Level) AddBombAtPixel(x int, y int) (b *Bomb, err error) {
+	if b, err = l.getBombAtPixel(x, y); err != nil {
+		return
+	}
+	if b != nil {
+		// Don't add bombs if they already exist
+		b = nil
+		return
+	}
+	var i = l.getPixelIndex(x, y)
+	x, y = l.getPixelFromIndex(i)
+	b = NewBomb(float64(x), float64(y))
+	l.bombs[i] = b
+	return
+}
+
+func (l *Level) TestPixelPassable(x int, y int) bool {
+	if t, err := l.getTileAtPixel(x, y); err != nil {
+		return false
+	} else if b, _ := l.getBombAtPixel(x, y); b != nil {
+		// Can't walk over bomb
+		return false
+	} else {
+		return TILES[t.Type].Passable
+	}
+}
+
 func (l *Level) getLayer(t string, n string) (out *system.TiledLayer, err error) {
 	for i, _ := range l.Map.Layers {
 		if l.Map.Layers[i].Type != t && l.Map.Layers[i].Name != n {
@@ -89,28 +120,37 @@ func (l *Level) getLayer(t string, n string) (out *system.TiledLayer, err error)
 	return
 }
 
-func (l *Level) getTileAt(x int, y int) (t *Tile, err error) {
-	var i = l.Map.Width*y + x
+func (l *Level) getPixelIndex(x int, y int) (i int) {
+	x = x / l.Map.Tilewidth
+	y = y / l.Map.Tileheight
+	i = l.Map.Width*y + x
+	return i
+}
+
+func (l *Level) getPixelFromIndex(i int) (x int, y int) {
+	x = l.iToX(i) * l.TileWidth
+	y = l.iToY(i) * l.TileHeight
+	return
+}
+
+func (l *Level) getBombAtPixel(x int, y int) (b *Bomb, err error) {
+	var i = l.getPixelIndex(x, y)
+	if i >= len(l.tiles) || i < 0 {
+		err = fmt.Errorf("Pixel at (%v, %v) out of range", x, y)
+		return
+	}
+	b = l.bombs[i]
+	return
+}
+
+func (l *Level) getTileAtPixel(x int, y int) (t *Tile, err error) {
+	var i = l.getPixelIndex(x, y)
 	if i >= len(l.tiles) || i < 0 {
 		err = fmt.Errorf("No tile at (%v,%v)", x, y)
 		return
 	}
 	t = &l.tiles[i]
 	return
-}
-
-func (l *Level) getTileAtPixel(x int, y int) (t *Tile, err error) {
-	x = x / l.Map.Tilewidth
-	y = y / l.Map.Tileheight
-	return l.getTileAt(x, y)
-}
-
-func (l *Level) TestPixelPassable(x int, y int) bool {
-	if t, err := l.getTileAtPixel(x, y); err != nil {
-		return false
-	} else {
-		return TILES[t.Type].Passable
-	}
 }
 
 func (l *Level) iToX(i int) int {

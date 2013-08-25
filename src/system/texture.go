@@ -58,7 +58,7 @@ func LoadTexture(path string, smoothing int, framewidth int, frameheight int) (t
 		var (
 			minx = (i * framewidth) % bounds.Dx()
 			maxx = minx + framewidth
-			miny = ((i * framewidth) / bounds.Dx() - 1) * frameheight
+			miny = ((i * framewidth) / bounds.Dx()) * frameheight
 			maxy = miny + frameheight
 		)
 		texture.Frames = append(texture.Frames, []int{
@@ -80,11 +80,11 @@ func (t *Texture) MaxX(i int) float64 {
 }
 
 func (t *Texture) MinY(i int) float64 {
-	return float64(t.Frames[i][2]) / float64(t.Height)
+	return 1 - float64(t.Frames[i][2])/float64(t.Height)
 }
 
 func (t *Texture) MaxY(i int) float64 {
-	return float64(t.Frames[i][3]) / float64(t.Height)
+	return 1 - float64(t.Frames[i][3])/float64(t.Height)
 }
 
 func (t *Texture) Bind() {
