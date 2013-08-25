@@ -37,11 +37,13 @@ func LoadTexture(path string, smoothing int, framewidth int, frameheight int) (t
 	var (
 		img    image.Image
 		bounds image.Rectangle
+		obounds image.Rectangle
 		gltex  gl.Texture
 	)
 	if img, err = loadPNG(path); err != nil {
 		return
 	}
+	obounds = img.Bounds()
 	img = getPow2Image(img)
 	bounds = img.Bounds()
 	if gltex, err = getGLTexture(img, smoothing); err != nil {
@@ -53,12 +55,12 @@ func LoadTexture(path string, smoothing int, framewidth int, frameheight int) (t
 		Height:  bounds.Dy(),
 		Frames:  make([][]int, 0),
 	}
-	frames := bounds.Dx() / framewidth * bounds.Dy() / frameheight
+	frames := obounds.Dx() / framewidth * obounds.Dy() / frameheight
 	for i := 0; i < frames; i++ {
 		var (
-			minx = (i * framewidth) % bounds.Dx()
+			minx = (i * framewidth) % obounds.Dx()
 			maxx = minx + framewidth
-			miny = ((i * framewidth) / bounds.Dx()) * frameheight
+			miny = ((i * framewidth) / obounds.Dx()) * frameheight
 			maxy = miny + frameheight
 		)
 		texture.Frames = append(texture.Frames, []int{

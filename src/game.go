@@ -16,6 +16,7 @@ package main
 
 import (
 	"./system"
+	"fmt"
 	"log"
 	"time"
 )
@@ -33,6 +34,9 @@ type Game struct {
 	Controller *system.Controller
 	Maps       []string
 	Level      *Level
+	Menu       *Menu
+	menus      map[string]*Menu
+	MenuPaths  map[string]string
 	LevelIndex int
 	Render     bool
 	Camera     *Camera
@@ -46,6 +50,9 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 			"data/level01.json",
 			"data/level02.json",
 		},
+		MenuPaths: map[string]string{
+			"splash": "data/menu_splash.json",
+		},
 		LevelIndex: 0,
 		Render:     false,
 		exit:       make(chan bool, 1),
@@ -53,6 +60,10 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	game.Controller.SetClearColor(BG_R, BG_G, BG_B, BG_A)
 	game.handleKeys()
 	game.handleClose()
+	if err = game.loadMenus(); err != nil {
+		return
+	}
+	game.setMenu("splash")
 	if err = game.setLevel(); err != nil {
 		return
 	}
@@ -124,6 +135,24 @@ func (g *Game) setLevel() (err error) {
 	return
 }
 
+func (g *Game) loadMenus() (err error) {
+	g.menus = map[string]*Menu{}
+	for key, path := range g.MenuPaths {
+		if g.menus[key], err = LoadMenu(path); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (g *Game) setMenu(key string) (err error) {
+	var ok bool
+	if g.Menu, ok = g.menus[key]; !ok {
+		err = fmt.Errorf("%v did not exist as a menu", key)
+	}
+	return
+}
+
 func (g *Game) getCast(path string, width int, height int) (cast *Cast, err error) {
 	return LoadCast(path, width, height, 32, 32)
 }
@@ -156,6 +185,9 @@ func (g *Game) Run() (err error) {
 			BeginPaint()
 			PaintMap(g.Controller, g.Level.Map)
 			PaintCast(g.Controller, g.Level.Cast)
+			if g.Menu != nil {
+				//PaintMap(g.Controller, g.Menu.Map)
+			}
 			EndPaint()
 		}
 		select {

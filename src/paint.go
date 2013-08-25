@@ -63,10 +63,9 @@ func PaintMap(ctrl *system.Controller, tm *system.TiledMap) {
 				continue
 			}
 			for i, gid := range l.Data {
-				//log.Printf("PaintMap %v %v %v\n", gid, ts.Firstgid, ts.Lastgid)
 				if gid >= ts.Firstgid && gid < ts.Lastgid {
-					x = i % l.Width
-					y = i / l.Width
+					x = (i % l.Width) * tm.Tilewidth
+					y = (i / l.Width) * tm.Tileheight
 					paintTile(x, y, tw, th, ts.Texture, gid-ts.Firstgid)
 				}
 			}
@@ -92,10 +91,10 @@ func paintSprite(minx int, miny int, maxx int, maxy int, t *system.Texture, inde
 
 func paintTile(x int, y int, w int, h int, t *system.Texture, index int) {
 	var (
-		minx = x * w
-		miny = y * h
-		maxx = (x + 1) * w
-		maxy = (y + 1) * h
+		minx = x
+		miny = y
+		maxx = x + w
+		maxy = y + h
 	)
 	paintSprite(minx, miny, maxx, maxy, t, index)
 }
