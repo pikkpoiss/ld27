@@ -32,6 +32,7 @@ type Level struct {
 	fire       []*Fire
 	TileWidth  int
 	TileHeight int
+	Won        bool
 }
 
 func LoadLevel(path string, cast *Cast) (out *Level, err error) {
@@ -54,6 +55,7 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 		Camera:     NewCamera(0, 0, cw, ch),
 		TileWidth:  tm.Tilewidth,
 		TileHeight: tm.Tileheight,
+		Won:        false,
 		tiles:      make([]Tile, count),
 		bombs:      make([]*Bomb, count),
 		fire:       make([]*Fire, count),
@@ -96,7 +98,7 @@ func (l *Level) Update(diff time.Duration) (err error) {
 	l.Cast.Update(l, diff)
 	l.Player.Update(l)
 	if l.Cast.Overlaps(l.Player.Actor, l.Goal) {
-		log.Printf("WIN\n")
+		l.Won = true
 	}
 	return
 }

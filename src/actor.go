@@ -303,7 +303,7 @@ func NewBomb(x float64, y float64) (b *Bomb) {
 			Padding:    12,
 		},
 		Elapsed: 0,
-		Expires: time.Duration(10) * time.Second,
+		Expires: time.Duration(5) * time.Second,
 		Radius:  2,
 	}
 }

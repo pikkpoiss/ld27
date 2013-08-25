@@ -33,25 +33,27 @@ type Game struct {
 	Controller *system.Controller
 	Maps       []string
 	Level      *Level
+	LevelIndex int
+	Render     bool
 	Camera     *Camera
 	exit       chan bool
 }
 
 func NewGame(ctrl *system.Controller) (game *Game, err error) {
-	var (
-		cast *Cast
-	)
 	game = &Game{
 		Controller: ctrl,
 		Maps: []string{
 			"data/level01.json",
+			"data/level02.json",
 		},
-		exit: make(chan bool, 1),
+		LevelIndex: 0,
+		Render:     false,
+		exit:       make(chan bool, 1),
 	}
 	game.Controller.SetClearColor(BG_R, BG_G, BG_B, BG_A)
 	game.handleKeys()
 	game.handleClose()
-	if err = game.setLevel(0, cast); err != nil {
+	if err = game.setLevel(); err != nil {
 		return
 	}
 	return
@@ -87,6 +89,9 @@ func (g *Game) handleKeys() {
 		case state == 1 && key == system.KeyRight:
 			g.Level.Player.SetDirection(RIGHT)
 			g.Level.Player.SetMovement(WALKING)
+		case state == 1 && key == 87: //w
+			log.Printf("Autowin\n")
+			g.Level.Won = true
 		case state == 0:
 			switch {
 			case g.Level.Player.TestState(UP) && key == system.KeyUp ||
@@ -103,10 +108,11 @@ func (g *Game) handleKeys() {
 	})
 }
 
-func (g *Game) setLevel(i int, cast *Cast) (err error) {
+func (g *Game) setLevel() (err error) {
 	var (
-		index = (i + len(g.Maps)) % len(g.Maps)
+		index = (g.LevelIndex + len(g.Maps)) % len(g.Maps)
 		path  = g.Maps[index]
+		cast  *Cast
 	)
 	if cast, err = g.getCast("data/actors.png", 32, 64); err != nil {
 		return
@@ -114,6 +120,7 @@ func (g *Game) setLevel(i int, cast *Cast) (err error) {
 	if g.Level, err = LoadLevel(path, cast); err != nil {
 		return
 	}
+	g.Render = true
 	return
 }
 
@@ -144,16 +151,23 @@ func (g *Game) Run() (err error) {
 	paint := time.NewTicker(time.Second / time.Duration(PAINT_HZ))
 	for running == true {
 		<-paint.C
-		g.Level.Camera.SetProjection()
-		BeginPaint()
-		PaintMap(g.Controller, g.Level.Map)
-		PaintCast(g.Controller, g.Level.Cast)
-		EndPaint()
+		if g.Render {
+			g.Level.Camera.SetProjection()
+			BeginPaint()
+			PaintMap(g.Controller, g.Level.Map)
+			PaintCast(g.Controller, g.Level.Cast)
+			EndPaint()
+		}
 		select {
 		case <-g.exit:
 			paint.Stop()
 			running = false
 		default:
+		}
+		if g.Level.Won {
+			g.Render = false
+			g.LevelIndex += 1
+			g.setLevel()
 		}
 	}
 	return
