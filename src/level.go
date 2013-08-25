@@ -89,10 +89,11 @@ func (l *Level) Update(diff time.Duration) (err error) {
 			b.Update(l)
 		}
 	}
-	for _, f := range l.fire {
+	for i, f := range l.fire {
 		if f != nil {
 			f.AddTime(diff)
 			f.Update(l)
+			l.setFireDirection(i)
 		}
 	}
 	l.Cast.Update(l, diff)
@@ -162,6 +163,45 @@ func (l *Level) Extinguish(f *Fire) {
 	}
 }
 
+func (l *Level) setFireDirection(i int) {
+	var (
+		x   int
+		y   int
+		f1  *Fire
+		f2  *Fire
+		err error
+	)
+	if f1, err = l.getFire(i); err != nil || f1 == nil {
+		return
+	}
+	x = l.iToX(i)
+	y = l.iToY(i)
+	if f2, err = l.getFire(l.xyToI(x, y-1)); err == nil && f2 != nil {
+		f1.SetState(UP)
+		f2.SetState(DOWN)
+	} else {
+		f1.UnsetState(UP)
+	}
+	if f2, err = l.getFire(l.xyToI(x, y+1)); err == nil && f2 != nil {
+		f1.SetState(DOWN)
+		f2.SetState(UP)
+	} else {
+		f1.UnsetState(DOWN)
+	}
+	if f2, err = l.getFire(l.xyToI(x-1, y)); err == nil && f2 != nil {
+		f1.SetState(LEFT)
+		f2.SetState(RIGHT)
+	} else {
+		f1.UnsetState(LEFT)
+	}
+	if f2, err = l.getFire(l.xyToI(x+1, y)); err == nil && f2 != nil {
+		f1.SetState(RIGHT)
+		f2.SetState(LEFT)
+	} else {
+		f1.UnsetState(RIGHT)
+	}
+}
+
 func (l *Level) addFireColumn(x int, y int, r int, stepx int, stepy int) {
 	for i := 1; i <= r; i++ {
 		if !l.addFire(x+(stepx*i), y+(stepy*i)) {
@@ -181,6 +221,8 @@ func (l *Level) addFire(x int, y int) bool {
 		err       error
 		ttype     TileType
 		continues bool
+		px        int
+		py        int
 	)
 	continues = true
 	if f, err = l.getFire(i); err != nil || f != nil {
@@ -198,10 +240,11 @@ func (l *Level) addFire(x int, y int) bool {
 			return continues
 		}
 	}
-	x, y = l.getPixelFromIndex(i)
-	f = NewFire(float64(x), float64(y))
+	px, py = l.getPixelFromIndex(i)
+	f = NewFire(float64(px), float64(py))
 	l.fire[i] = f
 	l.Cast.AddActor(f)
+	l.setFireDirection(i)
 	return continues
 }
 

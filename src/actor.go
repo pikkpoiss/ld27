@@ -144,11 +144,11 @@ func (a *Actor) TestState(state int) bool {
 
 const UNSET_MASK = 1<<10 - 1
 
-func (a *Actor) unsetState(mask int) {
+func (a *Actor) UnsetState(mask int) {
 	a.State &= UNSET_MASK ^ mask
 }
 
-func (a *Actor) setState(mask int) {
+func (a *Actor) SetState(mask int) {
 	a.State |= mask
 }
 
@@ -237,18 +237,18 @@ type Player struct {
 }
 
 func (p *Player) SetDirection(dir int) {
-	p.unsetState(LEFT | RIGHT | UP | DOWN)
+	p.UnsetState(LEFT | RIGHT | UP | DOWN)
 	if dir == RIGHT {
 		p.flipX = true
 	} else {
 		p.flipX = false
 	}
-	p.setState(dir)
+	p.SetState(dir)
 }
 
 func (p *Player) SetMovement(mov int) {
-	p.unsetState(WALKING | STOPPED)
-	p.setState(mov)
+	p.UnsetState(WALKING | STOPPED)
+	p.SetState(mov)
 }
 
 func NewPlayer(x float64, y float64, state int, offset int) (p *Player) {
@@ -268,7 +268,7 @@ type Bomb struct {
 	*Actor
 	Elapsed time.Duration
 	Expires time.Duration
-	Radius int
+	Radius  int
 }
 
 func NewBomb(x float64, y float64) (b *Bomb) {
@@ -282,7 +282,7 @@ func NewBomb(x float64, y float64) (b *Bomb) {
 		},
 		Elapsed: 0,
 		Expires: time.Duration(2) * time.Second,
-		Radius: 2,
+		Radius:  2,
 	}
 }
 
@@ -341,14 +341,29 @@ const (
 )
 
 var ACTOR_ANIMATIONS = map[int]*system.Animation{
-	LEFT | STOPPED:  system.Anim([]int{6}, 4),
-	RIGHT | STOPPED: system.Anim([]int{6}, 4),
-	UP | STOPPED:    system.Anim([]int{3}, 4),
-	DOWN | STOPPED:  system.Anim([]int{0}, 4),
-	LEFT | WALKING:  system.Anim([]int{6, 7, 6, 8}, 4),
-	RIGHT | WALKING: system.Anim([]int{6, 7, 6, 8}, 4),
-	UP | WALKING:    system.Anim([]int{3, 4, 3, 5}, 4),
-	DOWN | WALKING:  system.Anim([]int{0, 1, 0, 2}, 4),
-	BOMB:            system.Anim([]int{0, 1}, 4),
-	FLAME:           system.Anim([]int{0, 1, 2, 3, 4}, 4),
+	LEFT | STOPPED:                   system.Anim([]int{6}, 4),
+	RIGHT | STOPPED:                  system.Anim([]int{6}, 4),
+	UP | STOPPED:                     system.Anim([]int{3}, 4),
+	DOWN | STOPPED:                   system.Anim([]int{0}, 4),
+	LEFT | WALKING:                   system.Anim([]int{6, 7, 6, 8}, 4),
+	RIGHT | WALKING:                  system.Anim([]int{6, 7, 6, 8}, 4),
+	UP | WALKING:                     system.Anim([]int{3, 4, 3, 5}, 4),
+	DOWN | WALKING:                   system.Anim([]int{0, 1, 0, 2}, 4),
+	BOMB:                             system.Anim([]int{0, 1}, 4),
+	FLAME:                            system.Anim([]int{0}, 4),
+	FLAME | UP:                       system.Anim([]int{1}, 4),
+	FLAME | DOWN:                     system.Anim([]int{2}, 4),
+	FLAME | LEFT:                     system.Anim([]int{3}, 4),
+	FLAME | RIGHT:                    system.Anim([]int{4}, 4),
+	FLAME | UP | LEFT:                system.Anim([]int{5}, 4),
+	FLAME | UP | RIGHT:               system.Anim([]int{6}, 4),
+	FLAME | DOWN | RIGHT:             system.Anim([]int{7}, 4),
+	FLAME | DOWN | LEFT:              system.Anim([]int{8}, 4),
+	FLAME | DOWN | LEFT | RIGHT:      system.Anim([]int{9}, 4),
+	FLAME | UP | DOWN | LEFT:         system.Anim([]int{10}, 4),
+	FLAME | UP | LEFT | RIGHT:        system.Anim([]int{11}, 4),
+	FLAME | UP | RIGHT | DOWN:        system.Anim([]int{12}, 4),
+	FLAME | UP | RIGHT | DOWN | LEFT: system.Anim([]int{13}, 4),
+	FLAME | RIGHT | LEFT:             system.Anim([]int{14}, 4),
+	FLAME | UP | DOWN:                system.Anim([]int{15}, 4),
 }
