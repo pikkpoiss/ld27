@@ -31,6 +31,7 @@ type Level struct {
 	tiles      []Tile
 	bombs      []*Bomb
 	fire       []*Fire
+	enemies    []*Enemy
 	TileWidth  int
 	TileHeight int
 	Won        bool
@@ -62,6 +63,7 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 		tiles:      make([]Tile, count),
 		bombs:      make([]*Bomb, count),
 		fire:       make([]*Fire, count),
+		enemies:    make([]*Enemy, 0),
 	}
 	if err = out.parseTiles(); err != nil {
 		return
@@ -98,6 +100,15 @@ func (l *Level) Update(diff time.Duration) (err error) {
 			l.setFireDirection(i)
 		}
 	}
+	for i := len(l.enemies) - 1; i >= 0; i-- {
+		e := l.enemies[i]
+		if l.checkActorBurned(e.Player.Actor) {
+			l.Cast.RemoveActor(e)
+			l.enemies = append(l.enemies[:i], l.enemies[i+1:]...)
+		} else {
+			e.Update(l)
+		}
+	}
 	l.Cast.Update(l, diff)
 	l.Player.Update(l)
 	if l.checkActorBurned(l.Player.Actor) {
@@ -124,15 +135,22 @@ func (l *Level) AddBombFromActor(a *Actor) {
 
 func (l *Level) checkActorBurned(a *Actor) bool {
 	var (
-		x = int(a.X() + float64(l.TileWidth)/2.0)
-		y = int(a.Y() + float64(l.TileHeight)/2.0)
 		i int
 	)
-	i = l.getPixelIndex(x, y)
+	i = l.getActorIndex(a)
 	if l.fire[i] != nil {
 		return true
 	}
 	return false
+}
+
+func (l *Level) getActorIndex(a *Actor) (i int) {
+	var (
+		x = int(a.X() + float64(l.TileWidth)/2.0)
+		y = int(a.Y() + float64(l.TileHeight)/2.0)
+	)
+	i = l.getPixelIndex(x, y)
+	return
 }
 
 func (l *Level) addBombAtPixel(x int, y int) (b *Bomb, err error) {
@@ -157,8 +175,15 @@ func (l *Level) TestPixelPassable(a *Actor, x int, y int) bool {
 	} else if b, _ := l.getBombAtPixel(x, y); b != nil {
 		return b == a.Bomb
 	} else {
-		a.Bomb = nil
+		for _, e := range l.enemies {
+			i := l.getActorIndex(e.Player.Actor)
+			if &l.tiles[i] == t {
+				// Enemies are not passable
+				return false
+			}
+		}
 	}
+	a.Bomb = nil
 	return TILES[t.Type].Passable
 }
 
@@ -389,6 +414,10 @@ func (l *Level) parseObjects() (err error) {
 		case "player":
 			l.Player = NewPlayer(float64(obj.X), float64(obj.Y), DOWN|STOPPED, 0)
 			l.Cast.AddActor(l.Player)
+		case "enemy":
+			enemy := NewEnemy(float64(obj.X), float64(obj.Y), DOWN|STOPPED)
+			l.enemies = append(l.enemies, enemy)
+			l.Cast.AddActor(enemy)
 		case "goal":
 			l.Goal = NewActor(float64(obj.X), float64(obj.Y), GOAL, 1)
 			l.Cast.AddActor(l.Goal)

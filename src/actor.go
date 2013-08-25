@@ -286,6 +286,19 @@ func NewPlayer(x float64, y float64, state int, offset int) (p *Player) {
 	}
 }
 
+type Enemy struct {
+	*Player
+}
+
+func NewEnemy(x float64, y float64, state int) (*Enemy) {
+	return &Enemy{
+		Player: NewPlayer(x, y, state, 3),
+	}
+}
+
+func (e *Enemy) Update(l *Level) {
+}
+
 type Bomb struct {
 	*Actor
 	Elapsed time.Duration

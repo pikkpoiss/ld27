@@ -38,6 +38,30 @@
                  "width":32,
                  "x":416,
                  "y":288
+                }, 
+                {
+                 "height":32,
+                 "name":"enemy",
+                 "properties":
+                    {
+
+                    },
+                 "type":"enemy",
+                 "width":32,
+                 "x":96,
+                 "y":288
+                }, 
+                {
+                 "height":32,
+                 "name":"enemy",
+                 "properties":
+                    {
+
+                    },
+                 "type":"enemy",
+                 "width":32,
+                 "x":352,
+                 "y":96
                 }],
          "opacity":1,
          "type":"objectgroup",
