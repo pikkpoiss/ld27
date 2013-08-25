@@ -35,6 +35,7 @@ type Game struct {
 	Maps       []string
 	Level      *Level
 	Overlay    *OverlayMenu
+	Billboard  *BillboardMenu
 	Font       *system.Font
 	Menu       Menu
 	menus      map[string]Menu
@@ -71,10 +72,13 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	if game.Overlay, err = LoadOverlayMenu("data/menu_overlay.json", game.handleMenu, game.Font); err != nil {
 		return
 	}
-	game.setMenu("splash")
+	if game.Billboard, err = LoadBillboardMenu("data/menu_billboard.json", game.handleMenu); err != nil {
+		return
+	}
 	if err = game.setLevel(); err != nil {
 		return
 	}
+	game.setMenu("splash")
 	return
 }
 
@@ -91,6 +95,14 @@ func (g *Game) handleMenu(selection int) {
 	case selection == BUTTON_EXIT:
 		g.exit <- true
 	case selection == BUTTON_START:
+		if g.Menu == g.Billboard {
+			switch {
+			case g.Billboard.Curr == BILLBOARD_WIN:
+				g.exit <- true
+			}
+		} else if g.Menu == g.menus["splash"] {
+			g.setLevel()
+		}
 		g.Menu = nil
 	}
 }
@@ -242,7 +254,11 @@ func (g *Game) Run() (err error) {
 		if g.Level.Won {
 			g.Render = false
 			g.LevelIndex += 1
-			g.setLevel()
+			if g.LevelIndex == len(g.Maps) {
+				g.Menu = g.Billboard
+			} else {
+				g.setLevel()
+			}
 		}
 	}
 	return

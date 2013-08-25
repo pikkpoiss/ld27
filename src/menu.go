@@ -206,6 +206,55 @@ func (m *OverlayMenu) advance() {
 	}
 }
 
+type BillboardMenu struct {
+	*BasicMenu
+	Curr int
+}
+
+func (m *BillboardMenu) SelectNext() {
+	m.advance()
+}
+
+func (m *BillboardMenu) SelectPrev() {
+	m.advance()
+}
+
+func (m *BillboardMenu) Choose() {
+	m.advance()
+}
+
+func (m *BillboardMenu) advance() {
+	m.Handler(BUTTON_START)
+}
+
+func (m *BillboardMenu) SetFrame(i int) {
+	var (
+		layer *system.TiledLayer
+		err   error
+	)
+	m.Curr = i
+	if layer, err = m.Map.GetLayer("tilelayer", "Billboard"); err != nil {
+		return
+	}
+	layer.Data[0] = i
+}
+
+func LoadBillboardMenu(path string, handler MenuHandler) (out *BillboardMenu, err error) {
+	var menu *BasicMenu
+	if menu, err = LoadMenu(path, handler); err != nil {
+		return
+	}
+	out = &BillboardMenu{
+		BasicMenu: menu,
+		Curr:      0,
+	}
+	return
+}
+
+const (
+	BILLBOARD_WIN = 0
+)
+
 type Button struct {
 	Type  int
 	gid   int
