@@ -77,6 +77,16 @@ func (g *Game) handleClose() {
 	})
 }
 
+func (g *Game) handleMenu(selection int) {
+	log.Printf("onMenu: %v\n", selection)
+	switch {
+	case selection == BUTTON_EXIT:
+		g.exit <- true
+	case selection == BUTTON_START:
+		g.Menu = nil
+	}
+}
+
 func (g *Game) checkKeys() {
 	switch {
 	case g.Controller.Key(system.KeySpace) == 1:
@@ -87,36 +97,55 @@ func (g *Game) checkKeys() {
 
 func (g *Game) handleKeys() {
 	g.Controller.SetKeyCallback(func(key int, state int) {
-		switch {
-		case state == 1 && key == system.KeyUp:
-			g.Level.Player.SetDirection(UP)
-			g.Level.Player.SetMovement(WALKING)
-		case state == 1 && key == system.KeyDown:
-			g.Level.Player.SetDirection(DOWN)
-			g.Level.Player.SetMovement(WALKING)
-		case state == 1 && key == system.KeyLeft:
-			g.Level.Player.SetDirection(LEFT)
-			g.Level.Player.SetMovement(WALKING)
-		case state == 1 && key == system.KeyRight:
-			g.Level.Player.SetDirection(RIGHT)
-			g.Level.Player.SetMovement(WALKING)
-		case state == 1 && key == 87: //w
-			log.Printf("Autowin\n")
-			g.Level.Won = true
-		case state == 0:
-			switch {
-			case g.Level.Player.TestState(UP) && key == system.KeyUp ||
-				g.Level.Player.TestState(DOWN) && key == system.KeyDown ||
-				g.Level.Player.TestState(LEFT) && key == system.KeyLeft ||
-				g.Level.Player.TestState(RIGHT) && key == system.KeyRight:
-				g.Level.Player.SetMovement(STOPPED)
-			case key == system.KeySpace:
-				g.Level.AddBombFromActor(g.Level.Player.Actor)
-			}
-		default:
-			log.Printf("handleKeys: %v %v\n", key, state)
+		if g.Menu == nil {
+			g.handleGameKeys(key, state)
+		} else {
+			g.handleMenuKeys(key, state)
 		}
 	})
+}
+
+func (g *Game) handleMenuKeys(key int, state int) {
+	switch {
+	case state == 1 && key == system.KeyEnter:
+		g.Menu.Choose()
+	case state == 1 && key == system.KeyLeft:
+		g.Menu.SelectPrev()
+	case state == 1 && key == system.KeyRight:
+		g.Menu.SelectNext()
+	}
+}
+
+func (g *Game) handleGameKeys(key int, state int) {
+	switch {
+	case state == 1 && key == system.KeyUp:
+		g.Level.Player.SetDirection(UP)
+		g.Level.Player.SetMovement(WALKING)
+	case state == 1 && key == system.KeyDown:
+		g.Level.Player.SetDirection(DOWN)
+		g.Level.Player.SetMovement(WALKING)
+	case state == 1 && key == system.KeyLeft:
+		g.Level.Player.SetDirection(LEFT)
+		g.Level.Player.SetMovement(WALKING)
+	case state == 1 && key == system.KeyRight:
+		g.Level.Player.SetDirection(RIGHT)
+		g.Level.Player.SetMovement(WALKING)
+	case state == 1 && key == 87: //w
+		log.Printf("Autowin\n")
+		g.Level.Won = true
+	case state == 0:
+		switch {
+		case g.Level.Player.TestState(UP) && key == system.KeyUp ||
+			g.Level.Player.TestState(DOWN) && key == system.KeyDown ||
+			g.Level.Player.TestState(LEFT) && key == system.KeyLeft ||
+			g.Level.Player.TestState(RIGHT) && key == system.KeyRight:
+			g.Level.Player.SetMovement(STOPPED)
+		case key == system.KeySpace:
+			g.Level.AddBombFromActor(g.Level.Player.Actor)
+		}
+	default:
+		log.Printf("handleKeys: %v %v\n", key, state)
+	}
 }
 
 func (g *Game) setLevel() (err error) {
@@ -138,7 +167,7 @@ func (g *Game) setLevel() (err error) {
 func (g *Game) loadMenus() (err error) {
 	g.menus = map[string]*Menu{}
 	for key, path := range g.MenuPaths {
-		if g.menus[key], err = LoadMenu(path); err != nil {
+		if g.menus[key], err = LoadMenu(path, g.handleMenu); err != nil {
 			return
 		}
 	}
@@ -186,7 +215,7 @@ func (g *Game) Run() (err error) {
 			PaintMap(g.Controller, g.Level.Map)
 			PaintCast(g.Controller, g.Level.Cast)
 			if g.Menu != nil {
-				//PaintMap(g.Controller, g.Menu.Map)
+				PaintMap(g.Controller, g.Menu.Map)
 			}
 			EndPaint()
 		}

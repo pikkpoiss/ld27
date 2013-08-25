@@ -73,7 +73,7 @@ func (l *Level) Update(diff time.Duration) (err error) {
 	var (
 		layer *system.TiledLayer
 	)
-	if layer, err = l.getLayer("tilelayer", "Tiles"); err != nil {
+	if layer, err = l.Map.GetLayer("tilelayer", "Tiles"); err != nil {
 		return
 	}
 	for _, t := range TILES {
@@ -266,18 +266,6 @@ func (l *Level) addFire(x int, y int) bool {
 	return continues
 }
 
-func (l *Level) getLayer(t string, n string) (out *system.TiledLayer, err error) {
-	for i, _ := range l.Map.Layers {
-		if l.Map.Layers[i].Type != t && l.Map.Layers[i].Name != n {
-			continue
-		}
-		out = &l.Map.Layers[i]
-		return
-	}
-	err = fmt.Errorf("Could not find layer with type %v and name %v", t, n)
-	return
-}
-
 func (l *Level) getPixelIndex(x int, y int) (i int) {
 	x = x / l.Map.Tilewidth
 	y = y / l.Map.Tileheight
@@ -344,7 +332,7 @@ func (l *Level) parseTiles() (err error) {
 	var (
 		layer *system.TiledLayer
 	)
-	if layer, err = l.getLayer("tilelayer", "Tiles"); err != nil {
+	if layer, err = l.Map.GetLayer("tilelayer", "Tiles"); err != nil {
 		return
 	}
 	for i, v := range layer.Data {
@@ -361,7 +349,7 @@ func (l *Level) parseObjects() (err error) {
 	var (
 		layer *system.TiledLayer
 	)
-	if layer, err = l.getLayer("objectlayer", "Objects"); err != nil {
+	if layer, err = l.Map.GetLayer("objectgroup", "Objects"); err != nil {
 		return
 	}
 	for _, obj := range layer.Objects {

@@ -19,12 +19,17 @@ import (
 	"log"
 )
 
+type MenuHandler func(selection int)
+
 type Menu struct {
-	Map    *system.TiledMap
-	Camera *Camera
+	Map      *system.TiledMap
+	Camera   *Camera
+	Handler  MenuHandler
+	buttons  []*Button
+	selected int
 }
 
-func LoadMenu(path string) (out *Menu, err error) {
+func LoadMenu(path string, handler MenuHandler) (out *Menu, err error) {
 	var (
 		tm *system.TiledMap
 		cw float64
@@ -37,8 +42,80 @@ func LoadMenu(path string) (out *Menu, err error) {
 	cw = float64(tm.Width * tm.Tilewidth)
 	ch = float64(tm.Height * tm.Tileheight)
 	out = &Menu{
-		Map:    tm,
-		Camera: NewCamera(0, 0, cw, ch),
+		Map:     tm,
+		Camera:  NewCamera(0, 0, cw, ch),
+		Handler: handler,
+	}
+	if err = out.parseButtons(); err != nil {
+		return
+	}
+	out.Select(0)
+	return
+}
+
+func (m *Menu) parseButtons() (err error) {
+	var (
+		layer *system.TiledLayer
+		gid   int
+		v     int
+		i     int
+	)
+	if layer, err = m.Map.GetLayer("tilelayer", "Buttons"); err != nil {
+		return
+	}
+	for i, gid = range layer.Data {
+		if gid == 0 {
+			continue
+		}
+		if v, err = m.Map.GetTilesetOffset(gid); err != nil {
+			return
+		}
+		log.Printf("Got button: %v %v\n", i, v)
+		m.buttons = append(m.buttons, &Button{
+			Type:  v,
+			index: i,
+			gid:   gid,
+		})
 	}
 	return
 }
+
+func (m *Menu) Select(i int) {
+	var (
+		layer *system.TiledLayer
+		b     *Button
+		err   error
+	)
+	if layer, err = m.Map.GetLayer("tilelayer", "Buttons"); err != nil {
+		return
+	}
+	b = m.buttons[m.selected]
+	layer.Data[b.index] = b.gid
+	i = i % len(m.buttons)
+	m.selected = i
+	b = m.buttons[i]
+	layer.Data[b.index] = b.gid + 1
+}
+
+func (m *Menu) SelectNext() {
+	m.Select(m.selected + 1)
+}
+
+func (m *Menu) SelectPrev() {
+	m.Select(m.selected - 1 + len(m.buttons))
+}
+
+func (m *Menu) Choose() {
+	m.Handler(m.buttons[m.selected].Type)
+}
+
+type Button struct {
+	Type  int
+	gid   int
+	index int
+}
+
+const (
+	BUTTON_START = 0
+	BUTTON_EXIT  = 2
+)

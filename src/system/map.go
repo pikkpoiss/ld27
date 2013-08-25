@@ -16,6 +16,7 @@ package system
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -98,3 +99,26 @@ func LoadMap(path string) (out *TiledMap, err error) {
 	out = &tm
 	return
 }
+
+func (m *TiledMap) GetLayer(t string, n string) (out *TiledLayer, err error) {
+	for i, l := range m.Layers {
+		if l.Type == t && l.Name == n {
+			out = &m.Layers[i]
+			return
+		}
+	}
+	err = fmt.Errorf("Could not find layer with type %v and name %v", t, n)
+	return
+}
+
+func (m *TiledMap) GetTilesetOffset(gid int) (i int, err error) {
+	for _, s := range m.Tilesets {
+		if gid >= s.Firstgid && gid < s.Lastgid {
+			i = gid - s.Firstgid
+			return
+		}
+	}
+	err = fmt.Errorf("Could not find tileset containing gid %v", gid)
+	return
+}
+
