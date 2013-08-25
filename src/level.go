@@ -31,6 +31,7 @@ type Level struct {
 	Goal       *Tile
 	tiles      []Tile
 	bombs      []*Bomb
+	fire       []*Fire
 	TileWidth  int
 	TileHeight int
 }
@@ -40,8 +41,7 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 		tm    *system.TiledMap
 		cw    float64
 		ch    float64
-		tiles []Tile
-		bombs []*Bomb
+		count int
 	)
 	log.Printf("Loading level from %v\n", path)
 	if tm, err = system.LoadMap(path); err != nil {
@@ -49,16 +49,16 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 	}
 	cw = float64(tm.Width * tm.Tilewidth)
 	ch = float64(tm.Height * tm.Tileheight)
-	tiles = make([]Tile, tm.Width*tm.Height)
-	bombs = make([]*Bomb, tm.Width*tm.Height)
+	count = tm.Width * tm.Height
 	out = &Level{
 		Map:        tm,
 		Cast:       cast,
 		Camera:     NewCamera(0, 0, cw, ch),
 		TileWidth:  tm.Tilewidth,
 		TileHeight: tm.Tileheight,
-		tiles:      tiles,
-		bombs:      bombs,
+		tiles:      make([]Tile, count),
+		bombs:      make([]*Bomb, count),
+		fire:       make([]*Fire, count),
 	}
 	if err = out.parseTiles(); err != nil {
 		return
@@ -87,6 +87,12 @@ func (l *Level) Update(diff time.Duration) (err error) {
 		if b != nil {
 			b.AddTime(diff)
 			b.Update(l)
+		}
+	}
+	for _, f := range l.fire {
+		if f != nil {
+			f.AddTime(diff)
+			f.Update(l)
 		}
 	}
 	l.Cast.Update(l, diff)
@@ -128,10 +134,66 @@ func (l *Level) Explode(b *Bomb) {
 		if b != bomb {
 			continue
 		}
+		var (
+			x int
+			y int
+		)
+		x = l.iToX(i)
+		y = l.iToY(i)
 		l.bombs[i] = nil
 		l.Cast.RemoveActor(b)
+		if l.addFire(x, y) {
+			l.addFireColumn(x, y, b.Radius, 1, 0)
+			l.addFireColumn(x, y, b.Radius, -1, 0)
+			l.addFireColumn(x, y, b.Radius, 0, 1)
+			l.addFireColumn(x, y, b.Radius, 0, -1)
+		}
+	}
+}
+
+func (l *Level) Extinguish(f *Fire) {
+	for i, fire := range l.fire {
+		if f != fire {
+			continue
+		}
+		l.Cast.RemoveActor(f)
+		l.fire[i] = nil
 		break
 	}
+}
+
+func (l *Level) addFireColumn(x int, y int, r int, stepx int, stepy int) {
+	for i := 1; i <= r; i++ {
+		if !l.addFire(x+(stepx*i), y+(stepy*i)) {
+			break
+		}
+	}
+}
+
+func (l *Level) addFire(x int, y int) bool {
+	if x < 0 || y < 0 || x >= l.Map.Width || y >= l.Map.Height {
+		return false
+	}
+	var (
+		i   = l.xyToI(x, y)
+		t   *Tile
+		f   *Fire
+		err error
+	)
+	if f, err = l.getFire(i); err != nil || f != nil {
+		return false
+	}
+	if t, err = l.getTile(i); err != nil {
+		return false
+	}
+	if TILES[t.Type].StopsFire {
+		return false
+	}
+	x, y = l.getPixelFromIndex(i)
+	f = NewFire(float64(x), float64(y))
+	l.fire[i] = f
+	l.Cast.AddActor(f)
+	return true
 }
 
 func (l *Level) getLayer(t string, n string) (out *system.TiledLayer, err error) {
@@ -159,24 +221,45 @@ func (l *Level) getPixelFromIndex(i int) (x int, y int) {
 	return
 }
 
-func (l *Level) getBombAtPixel(x int, y int) (b *Bomb, err error) {
-	var i = l.getPixelIndex(x, y)
-	if i >= len(l.tiles) || i < 0 {
-		err = fmt.Errorf("Pixel at (%v, %v) out of range", x, y)
+func (l *Level) getFire(i int) (f *Fire, err error) {
+	if i >= len(l.fire) || i < 0 {
+		err = fmt.Errorf("Pixel at (%v) out of range", i)
+		return
+	}
+	f = l.fire[i]
+	return
+}
+
+func (l *Level) getBomb(i int) (b *Bomb, err error) {
+	if i >= len(l.bombs) || i < 0 {
+		err = fmt.Errorf("Pixel at (%v) out of range", i)
 		return
 	}
 	b = l.bombs[i]
 	return
 }
 
-func (l *Level) getTileAtPixel(x int, y int) (t *Tile, err error) {
+func (l *Level) getBombAtPixel(x int, y int) (*Bomb, error) {
 	var i = l.getPixelIndex(x, y)
+	return l.getBomb(i)
+}
+
+func (l *Level) getTile(i int) (t *Tile, err error) {
 	if i >= len(l.tiles) || i < 0 {
-		err = fmt.Errorf("No tile at (%v,%v)", x, y)
+		err = fmt.Errorf("Pixel at (%v) out of range", i)
 		return
 	}
 	t = &l.tiles[i]
 	return
+}
+
+func (l *Level) getTileAtPixel(x int, y int) (*Tile, error) {
+	var i = l.getPixelIndex(x, y)
+	return l.getTile(i)
+}
+
+func (l *Level) xyToI(x int, y int) int {
+	return y*l.Map.Width + x
 }
 
 func (l *Level) iToX(i int) int {
@@ -237,16 +320,19 @@ var TILES = map[int]TileType{
 		Anim:      system.Anim([]int{1}, 4),
 		Passable:  true,
 		Breakable: false,
+		StopsFire: false,
 	},
 	TILE_STONE: TileType{
 		Anim:      system.Anim([]int{2}, 4),
 		Passable:  false,
 		Breakable: false,
+		StopsFire: true,
 	},
 	TILE_BRICK: TileType{
 		Anim:      system.Anim([]int{3}, 16),
 		Passable:  false,
 		Breakable: true,
+		StopsFire: true,
 	},
 }
 
@@ -254,6 +340,7 @@ type TileType struct {
 	Anim      *system.Animation
 	Passable  bool
 	Breakable bool
+	StopsFire bool
 }
 
 type Tile struct {
@@ -261,4 +348,3 @@ type Tile struct {
 	Y    int
 	Type int
 }
-

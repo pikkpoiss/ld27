@@ -268,6 +268,7 @@ type Bomb struct {
 	*Actor
 	Elapsed time.Duration
 	Expires time.Duration
+	Radius int
 }
 
 func NewBomb(x float64, y float64) (b *Bomb) {
@@ -280,12 +281,12 @@ func NewBomb(x float64, y float64) (b *Bomb) {
 			Padding:    12,
 		},
 		Elapsed: 0,
-		Expires: time.Duration(10) * time.Second,
+		Expires: time.Duration(2) * time.Second,
+		Radius: 2,
 	}
 }
 
 func (b *Bomb) Update(level *Level) bool {
-	log.Printf("Elapsed: %v\n", b.Elapsed)
 	if b.Elapsed >= b.Expires {
 		level.Explode(b)
 		return false
@@ -297,6 +298,37 @@ func (b *Bomb) AddTime(diff time.Duration) {
 	b.Elapsed += diff
 }
 
+type Fire struct {
+	*Actor
+	Elapsed time.Duration
+	Expires time.Duration
+}
+
+func NewFire(x float64, y float64) (f *Fire) {
+	return &Fire{
+		Actor: &Actor{
+			x:          x,
+			y:          y,
+			State:      FLAME,
+			textureRow: 2,
+		},
+		Elapsed: 0,
+		Expires: time.Duration(500) * time.Millisecond,
+	}
+}
+
+func (f *Fire) AddTime(diff time.Duration) {
+	f.Elapsed += diff
+}
+
+func (f *Fire) Update(level *Level) bool {
+	if f.Elapsed >= f.Expires {
+		level.Extinguish(f)
+		return false
+	}
+	return true
+}
+
 const (
 	LEFT    = 1 << iota
 	RIGHT   = 1 << iota
@@ -305,6 +337,7 @@ const (
 	WALKING = 1 << iota
 	STOPPED = 1 << iota
 	BOMB    = 1 << iota
+	FLAME   = 1 << iota
 )
 
 var ACTOR_ANIMATIONS = map[int]*system.Animation{
@@ -317,4 +350,5 @@ var ACTOR_ANIMATIONS = map[int]*system.Animation{
 	UP | WALKING:    system.Anim([]int{3, 4, 3, 5}, 4),
 	DOWN | WALKING:  system.Anim([]int{0, 1, 0, 2}, 4),
 	BOMB:            system.Anim([]int{0, 1}, 4),
+	FLAME:           system.Anim([]int{0, 1, 2, 3, 4}, 4),
 }
