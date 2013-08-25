@@ -106,8 +106,20 @@ func (l *Level) AddPlayerAtPixel(x int, y int) {
 	l.Cast.AddActor(l.Player)
 }
 
-func (l *Level) AddBombAtPixel(x int, y int) (err error) {
-	var b *Bomb
+func (l *Level) AddBombFromActor(a *Actor) {
+	var (
+		x   = int(a.X() + float64(l.TileWidth)/2.0)
+		y   = int(a.Y() + float64(l.TileHeight)/2.0)
+		err error
+		b *Bomb
+	)
+	if b, err = l.addBombAtPixel(x, y); err != nil {
+		return
+	}
+	a.Bomb = b
+}
+
+func (l *Level) addBombAtPixel(x int, y int) (b *Bomb, err error) {
 	if b, err = l.getBombAtPixel(x, y); err != nil || b != nil {
 		return
 	}
@@ -119,15 +131,19 @@ func (l *Level) AddBombAtPixel(x int, y int) (err error) {
 	return
 }
 
-func (l *Level) TestPixelPassable(x int, y int) bool {
-	if t, err := l.getTileAtPixel(x, y); err != nil {
+func (l *Level) TestPixelPassable(a *Actor, x int, y int) bool {
+	var (
+		t   *Tile
+		err error
+	)
+	if t, err = l.getTileAtPixel(x, y); err != nil {
 		return false
 	} else if b, _ := l.getBombAtPixel(x, y); b != nil {
-		// Can't walk over bomb
-		return false
+		return b == a.Bomb
 	} else {
-		return TILES[t.Type].Passable
+		a.Bomb = nil
 	}
+	return TILES[t.Type].Passable
 }
 
 func (l *Level) Explode(b *Bomb) {

@@ -14,7 +14,6 @@
 
 package system
 
-
 type Drawable interface {
 	Y() float64
 	X() float64
@@ -30,5 +29,9 @@ func (s Drawables) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 type ByY struct{ Drawables }
 
-func (s ByY) Less(i, j int) bool { return s.Drawables[i].Y() < s.Drawables[j].Y() }
-
+func (s ByY) Less(i, j int) bool {
+	if s.Drawables[i].Y() == s.Drawables[j].Y() {
+		return s.Drawables[i].X() < s.Drawables[j].X()
+	}
+	return s.Drawables[i].Y() < s.Drawables[j].Y()
+}

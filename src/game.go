@@ -95,11 +95,7 @@ func (g *Game) handleKeys() {
 				g.Level.Player.TestState(RIGHT) && key == system.KeyRight:
 				g.Level.Player.SetMovement(STOPPED)
 			case key == system.KeySpace:
-				var (
-					x = int(g.Level.Player.X() + float64(g.Level.TileWidth)/2.0)
-					y = int(g.Level.Player.Y() + float64(g.Level.TileHeight)/2.0)
-				)
-				g.Level.AddBombAtPixel(x, y)
+				g.Level.AddBombFromActor(g.Level.Player.Actor)
 			}
 		default:
 			log.Printf("handleKeys: %v %v\n", key, state)

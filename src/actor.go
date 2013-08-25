@@ -83,6 +83,7 @@ type Actor struct {
 	flipX      bool
 	Rate       float64
 	Padding    int
+	Bomb       *Bomb
 }
 
 func (a *Actor) X() float64 {
@@ -171,8 +172,8 @@ func (a *Actor) moveDown(l *Level) {
 	)
 	x = a.getClamped(a.x, l.TileWidth)
 	y = int(a.y + a.Rate)
-	if l.TestPixelPassable(x+a.Padding, y+l.TileHeight) &&
-		l.TestPixelPassable(x+l.TileWidth-a.Padding, y+l.TileHeight) {
+	if l.TestPixelPassable(a, x+a.Padding, y+l.TileHeight) &&
+		l.TestPixelPassable(a, x+l.TileWidth-a.Padding, y+l.TileHeight) {
 		if x == int(a.x) {
 			// Only move once we've clamped.
 			a.y = float64(y)
@@ -188,8 +189,8 @@ func (a *Actor) moveUp(l *Level) {
 	)
 	x = a.getClamped(a.x, l.TileWidth)
 	y = int(a.y - a.Rate)
-	if l.TestPixelPassable(x+a.Padding, y) &&
-		l.TestPixelPassable(x+l.TileWidth-a.Padding, y) {
+	if l.TestPixelPassable(a, x+a.Padding, y) &&
+		l.TestPixelPassable(a, x+l.TileWidth-a.Padding, y) {
 		if x == int(a.x) {
 			// Only move once we've clamped.
 			a.y = float64(y)
@@ -205,8 +206,8 @@ func (a *Actor) moveRight(l *Level) {
 	)
 	y = a.getClamped(a.y, l.TileHeight)
 	x = int(a.x + a.Rate)
-	if l.TestPixelPassable(x+l.TileWidth, y+a.Padding) &&
-		l.TestPixelPassable(x+l.TileWidth, y+l.TileHeight-a.Padding) {
+	if l.TestPixelPassable(a, x+l.TileWidth, y+a.Padding) &&
+		l.TestPixelPassable(a, x+l.TileWidth, y+l.TileHeight-a.Padding) {
 		if y == int(a.y) {
 			// Only move once we've clamped.
 			a.x = float64(x)
@@ -222,8 +223,8 @@ func (a *Actor) moveLeft(l *Level) {
 	)
 	y = a.getClamped(a.y, l.TileHeight)
 	x = int(a.x - a.Rate)
-	if l.TestPixelPassable(x, y+a.Padding) &&
-		l.TestPixelPassable(x, y+l.TileHeight-a.Padding) {
+	if l.TestPixelPassable(a, x, y+a.Padding) &&
+		l.TestPixelPassable(a, x, y+l.TileHeight-a.Padding) {
 		if y == int(a.y) {
 			// Only move once we've clamped.
 			a.x = float64(x)
