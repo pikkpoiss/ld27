@@ -106,16 +106,14 @@ func (a *Actor) moveDown(l *Level) {
 		y int
 	)
 	x = a.getClamped(a.X, l.TileWidth)
-	if (x == int(a.X)) {
-		// Only move once we've clamped.
-		y = int(a.Y + a.Rate)
-	} else {
-		y = int(a.Y)
-	}
+	y = int(a.Y + a.Rate)
 	if l.TestPixelPassable(x+a.Padding, y+l.TileHeight) &&
 		l.TestPixelPassable(x+l.TileWidth-a.Padding, y+l.TileHeight) {
+		if x == int(a.X) {
+			// Only move once we've clamped.
+			a.Y = float64(y)
+		}
 		a.X = float64(x)
-		a.Y = float64(y)
 	}
 }
 
@@ -125,16 +123,14 @@ func (a *Actor) moveUp(l *Level) {
 		y int
 	)
 	x = a.getClamped(a.X, l.TileWidth)
-	if (x == int(a.X)) {
-		// Only move once we've clamped.
-		y = int(a.Y - a.Rate)
-	} else {
-		y = int(a.Y)
-	}
+	y = int(a.Y - a.Rate)
 	if l.TestPixelPassable(x+a.Padding, y) &&
 		l.TestPixelPassable(x+l.TileWidth-a.Padding, y) {
+		if x == int(a.X) {
+			// Only move once we've clamped.
+			a.Y = float64(y)
+		}
 		a.X = float64(x)
-		a.Y = float64(y)
 	}
 }
 
@@ -144,15 +140,13 @@ func (a *Actor) moveRight(l *Level) {
 		y int
 	)
 	y = a.getClamped(a.Y, l.TileHeight)
-	if (y == int(a.Y)) {
-		// Only move once we've clamped.
-		x = int(a.X + a.Rate)
-	} else {
-		x = int(a.X)
-	}
+	x = int(a.X + a.Rate)
 	if l.TestPixelPassable(x+l.TileWidth, y+a.Padding) &&
 		l.TestPixelPassable(x+l.TileWidth, y+l.TileHeight-a.Padding) {
-		a.X = float64(x)
+		if y == int(a.Y) {
+			// Only move once we've clamped.
+			a.X = float64(x)
+		}
 		a.Y = float64(y)
 	}
 }
@@ -163,15 +157,13 @@ func (a *Actor) moveLeft(l *Level) {
 		y int
 	)
 	y = a.getClamped(a.Y, l.TileHeight)
-	if (y == int(a.Y)) {
-		// Only move once we've clamped.
-		x = int(a.X - a.Rate)
-	} else {
-		x = int(a.X)
-	}
+	x = int(a.X - a.Rate)
 	if l.TestPixelPassable(x, y+a.Padding) &&
 		l.TestPixelPassable(x, y+l.TileHeight-a.Padding) {
-		a.X = float64(x)
+		if y == int(a.Y) {
+			// Only move once we've clamped.
+			a.X = float64(x)
+		}
 		a.Y = float64(y)
 	}
 }
