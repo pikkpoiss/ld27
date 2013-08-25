@@ -175,25 +175,34 @@ func (l *Level) addFire(x int, y int) bool {
 		return false
 	}
 	var (
-		i   = l.xyToI(x, y)
-		t   *Tile
-		f   *Fire
-		err error
+		i         = l.xyToI(x, y)
+		t         *Tile
+		f         *Fire
+		err       error
+		ttype     TileType
+		continues bool
 	)
+	continues = true
 	if f, err = l.getFire(i); err != nil || f != nil {
-		return false
+		return continues
 	}
 	if t, err = l.getTile(i); err != nil {
-		return false
+		return continues
 	}
-	if TILES[t.Type].StopsFire {
-		return false
+	ttype = TILES[t.Type]
+	if ttype.StopsFire {
+		continues = false
+		if ttype.Breakable {
+			t.Type = TILE_GRASS
+		} else {
+			return continues
+		}
 	}
 	x, y = l.getPixelFromIndex(i)
 	f = NewFire(float64(x), float64(y))
 	l.fire[i] = f
 	l.Cast.AddActor(f)
-	return true
+	return continues
 }
 
 func (l *Level) getLayer(t string, n string) (out *system.TiledLayer, err error) {
