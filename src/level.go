@@ -26,9 +26,7 @@ type Level struct {
 	Camera     *Camera
 	Cast       *Cast
 	Player     *Player
-	StartX     int
-	StartY     int
-	Goal       *Tile
+	Goal       *Actor
 	tiles      []Tile
 	bombs      []*Bomb
 	fire       []*Fire
@@ -66,7 +64,6 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 	if err = out.parseObjects(); err != nil {
 		return
 	}
-	out.AddPlayerAtPixel(out.StartX, out.StartY)
 	return
 }
 
@@ -98,12 +95,10 @@ func (l *Level) Update(diff time.Duration) (err error) {
 	}
 	l.Cast.Update(l, diff)
 	l.Player.Update(l)
+	if l.Cast.Overlaps(l.Player.Actor, l.Goal) {
+		log.Printf("WIN\n")
+	}
 	return
-}
-
-func (l *Level) AddPlayerAtPixel(x int, y int) {
-	l.Player = NewPlayer(float64(x), float64(y), DOWN|STOPPED, 0)
-	l.Cast.AddActor(l.Player)
 }
 
 func (l *Level) AddBombFromActor(a *Actor) {
@@ -111,7 +106,7 @@ func (l *Level) AddBombFromActor(a *Actor) {
 		x   = int(a.X() + float64(l.TileWidth)/2.0)
 		y   = int(a.Y() + float64(l.TileHeight)/2.0)
 		err error
-		b *Bomb
+		b   *Bomb
 	)
 	if b, err = l.addBombAtPixel(x, y); err != nil {
 		return
@@ -251,7 +246,7 @@ func (l *Level) addFire(x int, y int) bool {
 	if ttype.StopsFire {
 		continues = false
 		if ttype.Breakable {
-			t.Type = TILE_GRASS
+			t.Type = ttype.NextState
 		} else {
 			return continues
 		}
@@ -365,10 +360,11 @@ func (l *Level) parseObjects() (err error) {
 	for _, obj := range layer.Objects {
 		switch obj.Type {
 		case "player":
-			l.StartX = obj.X
-			l.StartY = obj.Y
+			l.Player = NewPlayer(float64(obj.X), float64(obj.Y), DOWN|STOPPED, 0)
+			l.Cast.AddActor(l.Player)
 		case "goal":
-			l.Goal, err = l.getTileAtPixel(obj.X, obj.Y)
+			l.Goal = NewActor(float64(obj.X), float64(obj.Y), GOAL, 1)
+			l.Cast.AddActor(l.Goal)
 		}
 		if err != nil {
 			return
@@ -381,6 +377,8 @@ const (
 	TILE_GRASS = 1 + iota
 	TILE_STONE
 	TILE_BRICK
+	TILE_BREAKABLE_STONE_1
+	TILE_BREAKABLE_STONE_2
 )
 
 var TILES = map[int]TileType{
@@ -396,11 +394,26 @@ var TILES = map[int]TileType{
 		Breakable: false,
 		StopsFire: true,
 	},
+	TILE_BREAKABLE_STONE_1: TileType{
+		Anim:      system.Anim([]int{4}, 4),
+		Passable:  false,
+		Breakable: true,
+		StopsFire: true,
+		NextState: TILE_BREAKABLE_STONE_2,
+	},
+	TILE_BREAKABLE_STONE_2: TileType{
+		Anim:      system.Anim([]int{5}, 4),
+		Passable:  false,
+		Breakable: true,
+		StopsFire: true,
+		NextState: TILE_GRASS,
+	},
 	TILE_BRICK: TileType{
 		Anim:      system.Anim([]int{3}, 16),
 		Passable:  false,
 		Breakable: true,
 		StopsFire: true,
+		NextState: TILE_GRASS,
 	},
 }
 
@@ -409,6 +422,7 @@ type TileType struct {
 	Passable  bool
 	Breakable bool
 	StopsFire bool
+	NextState int
 }
 
 type Tile struct {

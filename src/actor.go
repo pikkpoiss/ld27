@@ -49,6 +49,18 @@ func LoadCast(path string, width int, height int, th int, tw int) (c *Cast, err 
 	return
 }
 
+func (c *Cast) Overlaps(a *Actor, b *Actor) bool {
+	var (
+		w    = float64(c.Width - c.OffsetX)
+		h    = float64(c.Height - c.OffsetY)
+		xmin = a.x >= b.x && a.x <= b.x+w
+		xmax = a.x+w >= b.x && a.x+w <= b.x+w
+		ymin = a.y >= b.y && a.y <= b.y+h
+		ymax = a.y+h >= b.y && a.y+h <= b.y+h
+	)
+	return (xmin || xmax) && (ymin || ymax)
+}
+
 func (c *Cast) AddActor(a system.Drawable) {
 	if a == nil {
 		return
@@ -84,6 +96,15 @@ type Actor struct {
 	Rate       float64
 	Padding    int
 	Bomb       *Bomb
+}
+
+func NewActor(x float64, y float64, state int, textureRow int) *Actor {
+	return &Actor{
+		x:          x,
+		y:          y,
+		State:      state,
+		textureRow: textureRow,
+	}
 }
 
 func (a *Actor) X() float64 {
@@ -339,6 +360,7 @@ const (
 	STOPPED = 1 << iota
 	BOMB    = 1 << iota
 	FLAME   = 1 << iota
+	GOAL    = 1 << iota
 )
 
 var ACTOR_ANIMATIONS = map[int]*system.Animation{
@@ -351,6 +373,7 @@ var ACTOR_ANIMATIONS = map[int]*system.Animation{
 	UP | WALKING:                     system.Anim([]int{3, 4, 3, 5}, 4),
 	DOWN | WALKING:                   system.Anim([]int{0, 1, 0, 2}, 4),
 	BOMB:                             system.Anim([]int{0, 1}, 4),
+	GOAL:                             system.Anim([]int{2}, 4),
 	FLAME:                            system.Anim([]int{0}, 4),
 	FLAME | UP:                       system.Anim([]int{1}, 4),
 	FLAME | DOWN:                     system.Anim([]int{2}, 4),
