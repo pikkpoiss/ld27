@@ -229,6 +229,7 @@ func (l *Level) addFire(x int, y int) bool {
 		i         = l.xyToI(x, y)
 		t         *Tile
 		f         *Fire
+		b         *Bomb
 		err       error
 		ttype     TileType
 		continues bool
@@ -237,6 +238,10 @@ func (l *Level) addFire(x int, y int) bool {
 	)
 	continues = true
 	if f, err = l.getFire(i); err != nil || f != nil {
+		return continues
+	}
+	if b, err = l.getBomb(i); err != nil || b != nil {
+		b.AddTime(time.Duration(1000) * time.Hour)
 		return continues
 	}
 	if t, err = l.getTile(i); err != nil {

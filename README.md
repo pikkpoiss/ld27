@@ -19,7 +19,7 @@ TODO
     [X] Bomb placement
     [X] Bomb detonation
     [X] Destructible blocks
-    [ ] Level goal
+    [X] Level goal
     [ ] Timer
     [ ] Level win
     [ ] Player damage
