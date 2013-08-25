@@ -90,15 +90,16 @@ func (g *Game) handleClose() {
 }
 
 func (g *Game) handleMenu(selection int) {
-	log.Printf("onMenu: %v\n", selection)
 	switch {
 	case selection == BUTTON_EXIT:
 		g.exit <- true
 	case selection == BUTTON_START:
 		if g.Menu == g.Billboard {
 			switch {
-			case g.Billboard.Curr == BILLBOARD_WIN:
+			case g.Billboard.Curr == BILLBOARD_WON:
 				g.exit <- true
+			case g.Billboard.Curr == BILLBOARD_DIED:
+				g.setLevel()
 			}
 		} else if g.Menu == g.menus["splash"] {
 			g.setLevel()
@@ -128,6 +129,8 @@ func (g *Game) handleKeys() {
 
 func (g *Game) handleMenuKeys(key int, state int) {
 	switch {
+	case state == 1 && key == system.KeySpace:
+		g.Menu.Choose()
 	case state == 1 && key == system.KeyEnter:
 		g.Menu.Choose()
 	case state == 1 && key == system.KeyLeft:
@@ -154,6 +157,8 @@ func (g *Game) handleGameKeys(key int, state int) {
 	case state == 1 && key == 87: //w
 		log.Printf("Autowin\n")
 		g.Level.Won = true
+	case state == 1 && key == system.KeySpace:
+		g.Level.AddBombFromActor(g.Level.Player.Actor)
 	case state == 0:
 		switch {
 		case g.Level.Player.TestState(UP) && key == system.KeyUp ||
@@ -161,8 +166,6 @@ func (g *Game) handleGameKeys(key int, state int) {
 			g.Level.Player.TestState(LEFT) && key == system.KeyLeft ||
 			g.Level.Player.TestState(RIGHT) && key == system.KeyRight:
 			g.Level.Player.SetMovement(STOPPED)
-		case key == system.KeySpace:
-			g.Level.AddBombFromActor(g.Level.Player.Actor)
 		}
 	default:
 		log.Printf("handleKeys: %v %v\n", key, state)
@@ -186,6 +189,8 @@ func (g *Game) setLevel() (err error) {
 	if len(desc) > 0 {
 		g.Overlay.SetText(desc)
 		g.Menu = g.Overlay
+	} else {
+		g.Menu = nil
 	}
 	g.Render = true
 	return
@@ -252,11 +257,15 @@ func (g *Game) Run() (err error) {
 			running = false
 		default:
 		}
-		if g.Level.Won {
+		if g.Level.Died {
+			g.Menu = g.Billboard
+			g.Billboard.SetFrame(BILLBOARD_DIED)
+		} else if g.Level.Won {
 			g.Render = false
 			g.LevelIndex += 1
 			if g.LevelIndex == len(g.Maps) {
 				g.Menu = g.Billboard
+				g.Billboard.SetFrame(BILLBOARD_WON)
 			} else {
 				g.setLevel()
 			}

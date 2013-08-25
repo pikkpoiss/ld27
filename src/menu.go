@@ -252,7 +252,8 @@ func LoadBillboardMenu(path string, handler MenuHandler) (out *BillboardMenu, er
 }
 
 const (
-	BILLBOARD_WIN = 0
+	BILLBOARD_WON  = 1
+	BILLBOARD_DIED = 2
 )
 
 type Button struct {

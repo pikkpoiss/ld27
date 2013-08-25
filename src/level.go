@@ -18,8 +18,8 @@ import (
 	"./system"
 	"fmt"
 	"log"
-	"time"
 	"strings"
+	"time"
 )
 
 type Level struct {
@@ -34,6 +34,7 @@ type Level struct {
 	TileWidth  int
 	TileHeight int
 	Won        bool
+	Died       bool
 }
 
 func LoadLevel(path string, cast *Cast) (out *Level, err error) {
@@ -57,6 +58,7 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 		TileWidth:  tm.Tilewidth,
 		TileHeight: tm.Tileheight,
 		Won:        false,
+		Died:       false,
 		tiles:      make([]Tile, count),
 		bombs:      make([]*Bomb, count),
 		fire:       make([]*Fire, count),
@@ -98,6 +100,9 @@ func (l *Level) Update(diff time.Duration) (err error) {
 	}
 	l.Cast.Update(l, diff)
 	l.Player.Update(l)
+	if l.checkActorBurned(l.Player.Actor) {
+		l.Died = true
+	}
 	if l.Cast.Overlaps(l.Player.Actor, l.Goal) {
 		l.Won = true
 	}
@@ -115,6 +120,19 @@ func (l *Level) AddBombFromActor(a *Actor) {
 		return
 	}
 	a.Bomb = b
+}
+
+func (l *Level) checkActorBurned(a *Actor) bool {
+	var (
+		x = int(a.X() + float64(l.TileWidth)/2.0)
+		y = int(a.Y() + float64(l.TileHeight)/2.0)
+		i int
+	)
+	i = l.getPixelIndex(x, y)
+	if l.fire[i] != nil {
+		return true
+	}
+	return false
 }
 
 func (l *Level) addBombAtPixel(x int, y int) (b *Bomb, err error) {
@@ -179,7 +197,7 @@ func (l *Level) Extinguish(f *Fire) {
 
 func (l *Level) GetDescription() (text []string) {
 	var (
-		ok bool
+		ok  bool
 		raw string
 	)
 	if raw, ok = l.Map.Properties["text"]; !ok {
