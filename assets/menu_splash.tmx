@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="15" height="11" tilewidth="32" tileheight="32">
  <tileset firstgid="1" name="tiles-level" tilewidth="32" tileheight="32">
-  <image source="../data/tiles-level.png" width="320" height="32"/>
+  <image source="../data/tiles-level.png" width="512" height="32"/>
  </tileset>
- <tileset firstgid="11" name="menu" tilewidth="224" tileheight="32">
+ <tileset firstgid="17" name="menu" tilewidth="224" tileheight="32">
   <image source="../data/menu.png" width="448" height="512"/>
+ </tileset>
+ <tileset firstgid="49" name="tiles-splash" tilewidth="480" tileheight="352">
+  <image source="../data/tiles-splash.png" width="1440" height="352"/>
  </tileset>
  <layer name="Tiles" width="15" height="11">
   <data encoding="base64" compression="zlib">
    eJxjZGBgYBzFo3gQYQDYkACm
   </data>
  </layer>
+ <layer name="Splash" width="15" height="11">
+  <data encoding="base64" compression="zlib">
+   eJwzZhgFo2BwAQCGEAA0
+  </data>
+ </layer>
  <layer name="Buttons" width="15" height="11">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFQw1wU6CXl2quoB0AABSIABk=
+   eJxjYBgFIwkIUqBXmGquwA8AFTAAJQ==
   </data>
  </layer>
 </map>

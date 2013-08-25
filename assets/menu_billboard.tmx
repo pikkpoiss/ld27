@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="1" height="1" tilewidth="480" tileheight="352">
  <tileset firstgid="1" name="tiles-splash" tilewidth="480" tileheight="352">
-  <image source="../data/tiles-splash.png" width="480" height="352"/>
+  <image source="../data/tiles-splash.png" width="1440" height="352"/>
  </tileset>
  <layer name="Billboard" width="1" height="1">
   <data encoding="base64" compression="zlib">

@@ -80,7 +80,6 @@ func (m *BasicMenu) parseButtons() (err error) {
 		if v, err = m.Map.GetTilesetOffset(gid); err != nil {
 			return
 		}
-		log.Printf("Got button: %v %v\n", i, v)
 		m.buttons = append(m.buttons, &Button{
 			Type:  v,
 			index: i,
@@ -246,7 +245,7 @@ func LoadBillboardMenu(path string, handler MenuHandler) (out *BillboardMenu, er
 	}
 	out = &BillboardMenu{
 		BasicMenu: menu,
-		Curr:      0,
+		Curr:      1,
 	}
 	return
 }

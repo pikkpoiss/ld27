@@ -168,7 +168,6 @@ func (g *Game) handleGameKeys(key int, state int) {
 			g.Level.Player.SetMovement(STOPPED)
 		}
 	default:
-		log.Printf("handleKeys: %v %v\n", key, state)
 	}
 }
 
@@ -192,7 +191,6 @@ func (g *Game) setLevel() (err error) {
 	} else {
 		g.Menu = nil
 	}
-	g.Render = true
 	return
 }
 
@@ -241,16 +239,14 @@ func (g *Game) Run() (err error) {
 	paint := time.NewTicker(time.Second / time.Duration(PAINT_HZ))
 	for running == true {
 		<-paint.C
-		if g.Render {
-			g.Level.Camera.SetProjection()
-			BeginPaint()
-			PaintMap(g.Controller, g.Level.Map)
-			PaintCast(g.Controller, g.Level.Cast)
-			if g.Menu != nil {
-				PaintMenu(g.Controller, g.Menu)
-			}
-			EndPaint()
+		g.Level.Camera.SetProjection()
+		BeginPaint()
+		PaintMap(g.Controller, g.Level.Map)
+		PaintCast(g.Controller, g.Level.Cast)
+		if g.Menu != nil {
+			PaintMenu(g.Controller, g.Menu)
 		}
+		EndPaint()
 		select {
 		case <-g.exit:
 			paint.Stop()
@@ -261,12 +257,11 @@ func (g *Game) Run() (err error) {
 			g.Menu = g.Billboard
 			g.Billboard.SetFrame(BILLBOARD_DIED)
 		} else if g.Level.Won {
-			g.Render = false
-			g.LevelIndex += 1
-			if g.LevelIndex == len(g.Maps) {
+			if g.LevelIndex == len(g.Maps) - 1{
 				g.Menu = g.Billboard
 				g.Billboard.SetFrame(BILLBOARD_WON)
 			} else {
+				g.LevelIndex += 1
 				g.setLevel()
 			}
 		}
