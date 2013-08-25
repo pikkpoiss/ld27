@@ -102,8 +102,9 @@ func (g *Game) handleMenu(selection int) {
 			}
 		} else if g.Menu == g.menus["splash"] {
 			g.setLevel()
+		} else {
+			g.Menu = nil
 		}
-		g.Menu = nil
 	}
 }
 
