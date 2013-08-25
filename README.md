@@ -22,6 +22,7 @@ TODO
     [X] Level goal
     [X] Level win
     [X] Levels?
+    [X] Splash screen
     [ ] Timer
     [ ] Player damage
     [ ] Health indicator
@@ -37,7 +38,6 @@ TODO
     [ ] Sound effects
     [ ] Music
     [ ] Level menu
-    [ ] Splash screen
     [ ] End game screen
 
 Brainstorm
