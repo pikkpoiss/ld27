@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="15" height="11" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="tiles-level" tilewidth="32" tileheight="32">
+  <image source="../data/tiles-level.png" width="512" height="32"/>
+ </tileset>
+ <tileset firstgid="17" name="tiles-big" tilewidth="64" tileheight="64">
+  <image source="../data/tiles-big.png" width="64" height="64"/>
+ </tileset>
+ <layer name="Overlay" width="15" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFQwWwATEHEZgdi14uIOYkAnPT1AfEAQCFYAC8
+  </data>
+ </layer>
+ <objectgroup name="Text" width="15" height="11">
+  <object name="text" type="text" x="128" y="240" width="288" height="64"/>
+ </objectgroup>
+ <layer name="Buttons" width="15" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2BwAQAClAAB
+  </data>
+ </layer>
+ <layer name="Face" width="15" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFQwUIDrQD6AQAEfwAEg==
+  </data>
+ </layer>
+</map>

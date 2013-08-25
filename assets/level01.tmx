@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="15" height="11" tilewidth="32" tileheight="32">
+ <properties>
+  <property name="text" value="Oh no[BR]You fell into my basement!|Here, take these[BR]bombs to help escape|They go off in 10 seconds[BR]so be careful!"/>
+ </properties>
  <tileset firstgid="1" name="tiles-level" tilewidth="32" tileheight="32">
-  <image source="../data/tiles-level.png" width="320" height="32"/>
+  <image source="../data/tiles-level.png" width="512" height="32"/>
  </tileset>
  <layer name="Tiles" width="15" height="11">
   <data encoding="base64" compression="zlib">

@@ -49,6 +49,11 @@ func PaintCast(ctrl *system.Controller, c *Cast) {
 	c.Texture.Unbind()
 }
 
+func PaintMenu(ctrl *system.Controller, menu Menu) {
+	PaintMap(ctrl, menu.GetMap())
+	menu.Draw()
+}
+
 func PaintMap(ctrl *system.Controller, tm *system.TiledMap) {
 	var x int
 	var y int

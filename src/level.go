@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"strings"
 )
 
 type Level struct {
@@ -174,6 +175,19 @@ func (l *Level) Extinguish(f *Fire) {
 		l.fire[i] = nil
 		break
 	}
+}
+
+func (l *Level) GetDescription() (text []string) {
+	var (
+		ok bool
+		raw string
+	)
+	if raw, ok = l.Map.Properties["text"]; !ok {
+		return
+	}
+	raw = strings.Replace(raw, "[BR]", "\n", -1)
+	text = strings.Split(raw, "|")
+	return
 }
 
 func (l *Level) setFireDirection(i int) {

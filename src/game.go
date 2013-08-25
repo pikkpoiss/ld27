@@ -34,8 +34,10 @@ type Game struct {
 	Controller *system.Controller
 	Maps       []string
 	Level      *Level
-	Menu       *Menu
-	menus      map[string]*Menu
+	Overlay    *OverlayMenu
+	Font       *system.Font
+	Menu       Menu
+	menus      map[string]Menu
 	MenuPaths  map[string]string
 	LevelIndex int
 	Render     bool
@@ -61,6 +63,12 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	game.handleKeys()
 	game.handleClose()
 	if err = game.loadMenus(); err != nil {
+		return
+	}
+	if game.Font, err = system.LoadFont("data/slkscr.ttf", 32); err != nil {
+		return
+	}
+	if game.Overlay, err = LoadOverlayMenu("data/menu_overlay.json", game.handleMenu, game.Font); err != nil {
 		return
 	}
 	game.setMenu("splash")
@@ -153,6 +161,7 @@ func (g *Game) setLevel() (err error) {
 		index = (g.LevelIndex + len(g.Maps)) % len(g.Maps)
 		path  = g.Maps[index]
 		cast  *Cast
+		desc  []string
 	)
 	if cast, err = g.getCast("data/actors.png", 32, 64); err != nil {
 		return
@@ -160,12 +169,17 @@ func (g *Game) setLevel() (err error) {
 	if g.Level, err = LoadLevel(path, cast); err != nil {
 		return
 	}
+	desc = g.Level.GetDescription()
+	if len(desc) > 0 {
+		g.Overlay.SetText(desc)
+		g.Menu = g.Overlay
+	}
 	g.Render = true
 	return
 }
 
 func (g *Game) loadMenus() (err error) {
-	g.menus = map[string]*Menu{}
+	g.menus = map[string]Menu{}
 	for key, path := range g.MenuPaths {
 		if g.menus[key], err = LoadMenu(path, g.handleMenu); err != nil {
 			return
@@ -215,7 +229,7 @@ func (g *Game) Run() (err error) {
 			PaintMap(g.Controller, g.Level.Map)
 			PaintCast(g.Controller, g.Level.Cast)
 			if g.Menu != nil {
-				PaintMap(g.Controller, g.Menu.Map)
+				PaintMenu(g.Controller, g.Menu)
 			}
 			EndPaint()
 		}

@@ -17,11 +17,21 @@ package main
 import (
 	"./system"
 	"log"
+	"strings"
 )
+
+type Menu interface {
+	SelectNext()
+	SelectPrev()
+	Select(int)
+	Choose()
+	GetMap() *system.TiledMap
+	Draw()
+}
 
 type MenuHandler func(selection int)
 
-type Menu struct {
+type BasicMenu struct {
 	Map      *system.TiledMap
 	Camera   *Camera
 	Handler  MenuHandler
@@ -29,7 +39,7 @@ type Menu struct {
 	selected int
 }
 
-func LoadMenu(path string, handler MenuHandler) (out *Menu, err error) {
+func LoadMenu(path string, handler MenuHandler) (out *BasicMenu, err error) {
 	var (
 		tm *system.TiledMap
 		cw float64
@@ -41,7 +51,7 @@ func LoadMenu(path string, handler MenuHandler) (out *Menu, err error) {
 	}
 	cw = float64(tm.Width * tm.Tilewidth)
 	ch = float64(tm.Height * tm.Tileheight)
-	out = &Menu{
+	out = &BasicMenu{
 		Map:     tm,
 		Camera:  NewCamera(0, 0, cw, ch),
 		Handler: handler,
@@ -53,7 +63,7 @@ func LoadMenu(path string, handler MenuHandler) (out *Menu, err error) {
 	return
 }
 
-func (m *Menu) parseButtons() (err error) {
+func (m *BasicMenu) parseButtons() (err error) {
 	var (
 		layer *system.TiledLayer
 		gid   int
@@ -80,13 +90,23 @@ func (m *Menu) parseButtons() (err error) {
 	return
 }
 
-func (m *Menu) Select(i int) {
+func (m *BasicMenu) Draw() {
+}
+
+func (m *BasicMenu) GetMap() *system.TiledMap {
+	return m.Map
+}
+
+func (m *BasicMenu) Select(i int) {
 	var (
 		layer *system.TiledLayer
 		b     *Button
 		err   error
 	)
 	if layer, err = m.Map.GetLayer("tilelayer", "Buttons"); err != nil {
+		return
+	}
+	if len(m.buttons) == 0 {
 		return
 	}
 	b = m.buttons[m.selected]
@@ -97,16 +117,93 @@ func (m *Menu) Select(i int) {
 	layer.Data[b.index] = b.gid + 1
 }
 
-func (m *Menu) SelectNext() {
+func (m *BasicMenu) SelectNext() {
 	m.Select(m.selected + 1)
 }
 
-func (m *Menu) SelectPrev() {
+func (m *BasicMenu) SelectPrev() {
 	m.Select(m.selected - 1 + len(m.buttons))
 }
 
-func (m *Menu) Choose() {
+func (m *BasicMenu) Choose() {
 	m.Handler(m.buttons[m.selected].Type)
+}
+
+type OverlayMenu struct {
+	*BasicMenu
+	Text  []string
+	Curr  int
+	Font  *system.Font
+	TextX float64
+	TextY float64
+}
+
+func LoadOverlayMenu(path string, handler MenuHandler, font *system.Font) (out *OverlayMenu, err error) {
+	var menu *BasicMenu
+	if menu, err = LoadMenu(path, handler); err != nil {
+		return
+	}
+	out = &OverlayMenu{
+		BasicMenu: menu,
+		Text:      []string{},
+		Curr:      0,
+		Font:      font,
+	}
+	out.parseObjects()
+	return
+}
+
+func (m *OverlayMenu) parseObjects() {
+	var (
+		layer *system.TiledLayer
+		err   error
+	)
+	if layer, err = m.Map.GetLayer("objectgroup", "Text"); err != nil {
+		return
+	}
+	for _, obj := range layer.Objects {
+		switch obj.Type {
+		case "text":
+			m.TextX = float64(obj.X)
+			m.TextY = float64(obj.Y)
+		}
+	}
+}
+
+func (m *OverlayMenu) SetText(text []string) {
+	m.Text = text
+	m.Curr = 0
+}
+
+func (m *OverlayMenu) SelectNext() {
+	m.advance()
+}
+
+func (m *OverlayMenu) SelectPrev() {
+	m.advance()
+}
+
+func (m *OverlayMenu) Choose() {
+	m.advance()
+}
+
+func (m *OverlayMenu) Draw() {
+	if len(m.Text) > m.Curr {
+		var y = m.TextY * 2
+		var lines = strings.Split(m.Text[m.Curr], "\n")
+		for _, line := range lines {
+			// Scaling is a hack, since we're pixel doubling
+			m.Font.Printf(m.TextX*2, y, "%v", line)
+			y += 32
+		}
+	}
+}
+
+func (m *OverlayMenu) advance() {
+	m.Curr += 1
+	if m.Curr >= len(m.Text) {
+		m.Handler(BUTTON_START)
+	}
 }
 
 type Button struct {

@@ -23,6 +23,8 @@ TODO
     [X] Level win
     [X] Levels?
     [X] Splash screen
+    [ ] Text
+    [ ] Intro overlay
     [ ] Timer
     [ ] Player damage
     [ ] Health indicator
