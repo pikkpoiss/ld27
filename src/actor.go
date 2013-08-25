@@ -19,6 +19,7 @@ import (
 	"log"
 	"math"
 	"sort"
+	"time"
 )
 
 type Cast struct {
@@ -43,6 +44,7 @@ func LoadCast(path string, width int, height int, th int, tw int) (c *Cast, err 
 		OffsetX:     width - tw,
 		OffsetY:     height - th,
 		TextureCols: t.Width / width,
+		Actors:      []system.Drawable{},
 	}
 	return
 }
@@ -56,10 +58,17 @@ func (c *Cast) AddActor(a system.Drawable) {
 	return
 }
 
-func (c *Cast) Update(level *Level) {
-	for _, a := range c.Actors {
-		a.Update(level)
+func (c *Cast) RemoveActor(a system.Drawable) {
+	for i, actor := range c.Actors {
+		if a != actor {
+			continue
+		}
+		c.Actors = append(c.Actors[:i], c.Actors[i+1:]...)
+		break
 	}
+}
+
+func (c *Cast) Update(level *Level, diff time.Duration) {
 	sort.Sort(system.ByY{c.Actors})
 	for _, a := range ACTOR_ANIMATIONS {
 		a.Next()
@@ -100,10 +109,9 @@ func (a *Actor) TextureRow() int {
 	return a.textureRow
 }
 
-func (a *Actor) Update(data interface{}) {
-	level := data.(*Level)
+func (a *Actor) Update(level *Level) bool {
 	if !a.TestState(WALKING) {
-		return
+		return true
 	}
 	switch {
 	case a.TestState(DOWN):
@@ -115,6 +123,7 @@ func (a *Actor) Update(data interface{}) {
 	case a.TestState(LEFT):
 		a.moveLeft(level)
 	}
+	return true
 }
 
 func (a *Actor) GetFrame() int {
@@ -257,7 +266,8 @@ func NewPlayer(x float64, y float64, state int, offset int) (p *Player) {
 
 type Bomb struct {
 	*Actor
-	Counter int
+	Elapsed time.Duration
+	Expires time.Duration
 }
 
 func NewBomb(x float64, y float64) (b *Bomb) {
@@ -269,14 +279,22 @@ func NewBomb(x float64, y float64) (b *Bomb) {
 			textureRow: 1,
 			Padding:    12,
 		},
-		Counter: 0,
+		Elapsed: 0,
+		Expires: time.Duration(10) * time.Second,
 	}
 }
 
-func (b *Bomb) Update(data interface{}) {
-	//level := data.(*Level)
-	b.Counter += 1
-	log.Printf("Counter: %v\n", b.Counter)
+func (b *Bomb) Update(level *Level) bool {
+	log.Printf("Elapsed: %v\n", b.Elapsed)
+	if b.Elapsed >= b.Expires {
+		level.Explode(b)
+		return false
+	}
+	return true
+}
+
+func (b *Bomb) AddTime(diff time.Duration) {
+	b.Elapsed += diff
 }
 
 const (

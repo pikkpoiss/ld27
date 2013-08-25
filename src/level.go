@@ -18,11 +18,14 @@ import (
 	"./system"
 	"fmt"
 	"log"
+	"time"
 )
 
 type Level struct {
 	Map        *system.TiledMap
 	Camera     *Camera
+	Cast       *Cast
+	Player     *Player
 	StartX     int
 	StartY     int
 	Goal       *Tile
@@ -32,7 +35,7 @@ type Level struct {
 	TileHeight int
 }
 
-func LoadLevel(path string) (out *Level, err error) {
+func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 	var (
 		tm    *system.TiledMap
 		cw    float64
@@ -50,6 +53,7 @@ func LoadLevel(path string) (out *Level, err error) {
 	bombs = make([]*Bomb, tm.Width*tm.Height)
 	out = &Level{
 		Map:        tm,
+		Cast:       cast,
 		Camera:     NewCamera(0, 0, cw, ch),
 		TileWidth:  tm.Tilewidth,
 		TileHeight: tm.Tileheight,
@@ -62,10 +66,11 @@ func LoadLevel(path string) (out *Level, err error) {
 	if err = out.parseObjects(); err != nil {
 		return
 	}
+	out.AddPlayerAtPixel(out.StartX, out.StartY)
 	return
 }
 
-func (l *Level) Update() (err error) {
+func (l *Level) Update(diff time.Duration) (err error) {
 	var (
 		layer *system.TiledLayer
 	)
@@ -78,22 +83,32 @@ func (l *Level) Update() (err error) {
 	for i, t := range l.tiles {
 		layer.Data[i] = TILES[t.Type].Anim.Curr()
 	}
+	for _, b := range l.bombs {
+		if b != nil {
+			b.AddTime(diff)
+			b.Update(l)
+		}
+	}
+	l.Cast.Update(l, diff)
+	l.Player.Update(l)
 	return
 }
 
-func (l *Level) AddBombAtPixel(x int, y int) (b *Bomb, err error) {
-	if b, err = l.getBombAtPixel(x, y); err != nil {
-		return
-	}
-	if b != nil {
-		// Don't add bombs if they already exist
-		b = nil
+func (l *Level) AddPlayerAtPixel(x int, y int) {
+	l.Player = NewPlayer(float64(x), float64(y), DOWN|STOPPED, 0)
+	l.Cast.AddActor(l.Player)
+}
+
+func (l *Level) AddBombAtPixel(x int, y int) (err error) {
+	var b *Bomb
+	if b, err = l.getBombAtPixel(x, y); err != nil || b != nil {
 		return
 	}
 	var i = l.getPixelIndex(x, y)
 	x, y = l.getPixelFromIndex(i)
 	b = NewBomb(float64(x), float64(y))
 	l.bombs[i] = b
+	l.Cast.AddActor(b)
 	return
 }
 
@@ -105,6 +120,17 @@ func (l *Level) TestPixelPassable(x int, y int) bool {
 		return false
 	} else {
 		return TILES[t.Type].Passable
+	}
+}
+
+func (l *Level) Explode(b *Bomb) {
+	for i, bomb := range l.bombs {
+		if b != bomb {
+			continue
+		}
+		l.bombs[i] = nil
+		l.Cast.RemoveActor(b)
+		break
 	}
 }
 
@@ -208,22 +234,26 @@ const (
 
 var TILES = map[int]TileType{
 	TILE_GRASS: TileType{
-		Anim:     system.Anim([]int{1}, 4),
-		Passable: true,
+		Anim:      system.Anim([]int{1}, 4),
+		Passable:  true,
+		Breakable: false,
 	},
 	TILE_STONE: TileType{
-		Anim:     system.Anim([]int{2}, 4),
-		Passable: false,
+		Anim:      system.Anim([]int{2}, 4),
+		Passable:  false,
+		Breakable: false,
 	},
 	TILE_BRICK: TileType{
-		Anim:     system.Anim([]int{3, 2}, 16),
-		Passable: false,
+		Anim:      system.Anim([]int{3}, 16),
+		Passable:  false,
+		Breakable: true,
 	},
 }
 
 type TileType struct {
-	Anim     *system.Animation
-	Passable bool
+	Anim      *system.Animation
+	Passable  bool
+	Breakable bool
 }
 
 type Tile struct {
@@ -231,3 +261,4 @@ type Tile struct {
 	Y    int
 	Type int
 }
+

@@ -16,7 +16,7 @@ TODO
     [X] Animations
     [X] Load player
     [X] Player movement
-    [ ] Bomb placement
+    [X] Bomb placement
     [ ] Bomb detonation
     [ ] Destructible blocks
     [ ] Level goal

@@ -18,7 +18,6 @@ package system
 type Drawable interface {
 	Y() float64
 	X() float64
-	Update(interface{})
 	GetFrame() int
 	FlipX() bool
 	TextureRow() int
