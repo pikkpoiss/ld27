@@ -20,8 +20,9 @@ TODO
     [X] Bomb detonation
     [X] Destructible blocks
     [X] Level goal
+    [X] Level win
+    [X] Levels?
     [ ] Timer
-    [ ] Level win
     [ ] Player damage
     [ ] Health indicator
     [ ] Level lose
@@ -35,9 +36,9 @@ TODO
     [ ] Enemy artwork
     [ ] Sound effects
     [ ] Music
+    [ ] Level menu
     [ ] Splash screen
     [ ] End game screen
-    [ ] Levels?
 
 Brainstorm
 ----------
