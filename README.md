@@ -23,24 +23,24 @@ TODO
     [X] Level win
     [X] Levels?
     [X] Splash screen
-    [ ] Text
-    [ ] Intro overlay
+    [X] Text
+    [X] Intro overlay
     [ ] Timer
-    [ ] Player damage
+    [X] Player damage
     [ ] Health indicator
-    [ ] Level lose
+    [X] Level lose
     [ ] Level timeout
-    [ ] Load enemies
-    [ ] Simple enemy AI
-    [ ] Player damage
+    [X] Load enemies
+    [X] Simple enemy AI
+    [X] Player damage
     [ ] Complex enemy AI
     [ ] Level artwork
     [ ] Player artwork
     [ ] Enemy artwork
-    [ ] Sound effects
-    [ ] Music
+    [X] Sound effects
+    [X] Music
     [ ] Level menu
-    [ ] End game screen
+    [X] End game screen
 
 Brainstorm
 ----------
