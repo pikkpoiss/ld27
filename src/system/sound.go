@@ -46,6 +46,24 @@ func (s *Sound) PlayMusic(path string) (err error) {
 	return
 }
 
+func (s *Sound) GetEffect(path string) (c *mixer.Chunk, err error) {
+	c = mixer.LoadWAV(path)
+	if c == nil {
+		err = fmt.Errorf(sdl.GetError())
+		return
+	}
+	return
+}
+
+func (s *Sound) GetMusic(path string) (m *mixer.Music, err error) {
+	m = mixer.LoadMUS(path)
+	if m == nil {
+		err = fmt.Errorf(sdl.GetError())
+		return
+	}
+	return
+}
+
 // Call to clean up after you're done.
 func (s *Sound) Terminate() {
 	sdl.Quit()

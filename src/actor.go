@@ -16,6 +16,7 @@ package main
 
 import (
 	"./system"
+	"math/rand"
 	"log"
 	"math"
 	"sort"
@@ -288,15 +289,74 @@ func NewPlayer(x float64, y float64, state int, offset int) (p *Player) {
 
 type Enemy struct {
 	*Player
+	Target *Tile
+	rng    *rand.Rand
+	tX     float64
+	tY     float64
 }
 
-func NewEnemy(x float64, y float64, state int) (*Enemy) {
+func NewEnemy(x float64, y float64, state int) *Enemy {
 	return &Enemy{
-		Player: NewPlayer(x, y, state, 3),
+		Player: &Player{
+			Actor: &Actor{
+				x:          x,
+				y:          y,
+				State:      state,
+				textureRow: 3,
+				Rate:       1.0,
+				Padding:    12,
+			},
+		},
+		rng:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		Target: nil,
 	}
 }
 
 func (e *Enemy) Update(l *Level) {
+	if e.Target == nil {
+		if e.rng.Float32() > 0.9 {
+			l.AddBombFromActor(e.Player.Actor)
+		}
+		opts := l.GetMovementOptions(e.Player.Actor)
+		e.Target = opts[e.rng.Intn(len(opts))]
+		tX, tY := l.TileToPixel(e.Target)
+		e.tX = float64(tX)
+		e.tY = float64(tY)
+	}
+	var (
+		dX = math.Abs(e.X() - e.tX)
+		dY = math.Abs(e.Y() - e.tY)
+	)
+	if dX <= e.Player.Actor.Rate && dX > 0 {
+		e.SetX(e.tX)
+		return
+	} else if dY <= e.Player.Actor.Rate && dY > 0 {
+		e.SetY(e.tY)
+		return
+	} else if dY == 0 && dX == 0 {
+		e.Target = nil
+		return
+	}
+	if e.tX > e.X() {
+		e.SetDirection(RIGHT)
+		e.SetMovement(WALKING)
+		e.moveRight(l)
+	} else if e.tX < e.X() {
+		e.SetDirection(LEFT)
+		e.SetMovement(WALKING)
+		e.moveLeft(l)
+	} else if e.tY > e.Y() {
+		e.SetDirection(DOWN)
+		e.SetMovement(WALKING)
+		e.moveDown(l)
+	} else if e.tY < e.Y() {
+		e.SetDirection(UP)
+		e.SetMovement(WALKING)
+		e.moveUp(l)
+	} else {
+		e.SetMovement(STOPPED)
+		e.Target = nil
+	}
 }
 
 type Bomb struct {
@@ -316,7 +376,7 @@ func NewBomb(x float64, y float64) (b *Bomb) {
 			Padding:    12,
 		},
 		Elapsed: 0,
-		Expires: time.Duration(2) * time.Second,
+		Expires: time.Duration(3) * time.Second,
 		Radius:  2,
 	}
 }
@@ -348,7 +408,7 @@ func NewFire(x float64, y float64) (f *Fire) {
 			textureRow: 2,
 		},
 		Elapsed: 0,
-		Expires: time.Duration(500) * time.Millisecond,
+		Expires: time.Duration(250) * time.Millisecond,
 	}
 }
 

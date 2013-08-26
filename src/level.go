@@ -24,6 +24,7 @@ import (
 
 type Level struct {
 	Map        *system.TiledMap
+	snd        SoundPlayer
 	Camera     *Camera
 	Cast       *Cast
 	Player     *Player
@@ -38,7 +39,7 @@ type Level struct {
 	Died       bool
 }
 
-func LoadLevel(path string, cast *Cast) (out *Level, err error) {
+func LoadLevel(path string, cast *Cast, snd SoundPlayer) (out *Level, err error) {
 	var (
 		tm    *system.TiledMap
 		cw    float64
@@ -64,6 +65,7 @@ func LoadLevel(path string, cast *Cast) (out *Level, err error) {
 		bombs:      make([]*Bomb, count),
 		fire:       make([]*Fire, count),
 		enemies:    make([]*Enemy, 0),
+		snd:        snd,
 	}
 	if err = out.parseTiles(); err != nil {
 		return
@@ -165,6 +167,40 @@ func (l *Level) addBombAtPixel(x int, y int) (b *Bomb, err error) {
 	return
 }
 
+func (l *Level) GetMovementOptions(a *Actor) (out []*Tile) {
+	var (
+		i   int
+		x   int
+		y   int
+		t   *Tile
+		err error
+	)
+	i = l.getActorIndex(a)
+	x = l.iToX(i)
+	y = l.iToY(i)
+	if t, err = l.getTile(l.xyToI(x+1, y)); err == nil {
+		if TILES[t.Type].Passable {
+			out = append(out, t)
+		}
+	}
+	if t, err = l.getTile(l.xyToI(x-1, y)); err == nil {
+		if TILES[t.Type].Passable {
+			out = append(out, t)
+		}
+	}
+	if t, err = l.getTile(l.xyToI(x, y+1)); err == nil {
+		if TILES[t.Type].Passable {
+			out = append(out, t)
+		}
+	}
+	if t, err = l.getTile(l.xyToI(x, y-1)); err == nil {
+		if TILES[t.Type].Passable {
+			out = append(out, t)
+		}
+	}
+	return
+}
+
 func (l *Level) TestPixelPassable(a *Actor, x int, y int) bool {
 	var (
 		t   *Tile
@@ -176,6 +212,9 @@ func (l *Level) TestPixelPassable(a *Actor, x int, y int) bool {
 		return b == a.Bomb
 	} else {
 		for _, e := range l.enemies {
+			if e.Player.Actor == a {
+				continue
+			}
 			i := l.getActorIndex(e.Player.Actor)
 			if &l.tiles[i] == t {
 				// Enemies are not passable
@@ -200,6 +239,7 @@ func (l *Level) Explode(b *Bomb) {
 		y = l.iToY(i)
 		l.bombs[i] = nil
 		l.Cast.RemoveActor(b)
+		l.snd("explosion")
 		if l.addFire(x, y) {
 			l.addFireColumn(x, y, b.Radius, 1, 0)
 			l.addFireColumn(x, y, b.Radius, -1, 0)
@@ -333,6 +373,12 @@ func (l *Level) getPixelIndex(x int, y int) (i int) {
 func (l *Level) getPixelFromIndex(i int) (x int, y int) {
 	x = l.iToX(i) * l.TileWidth
 	y = l.iToY(i) * l.TileHeight
+	return
+}
+
+func (l *Level) TileToPixel(t *Tile) (x int, y int) {
+	x = t.X * l.TileWidth
+	y = t.Y * l.TileHeight
 	return
 }
 

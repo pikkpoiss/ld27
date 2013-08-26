@@ -17,6 +17,7 @@ package main
 import (
 	"./system"
 	"fmt"
+	"github.com/banthar/Go-SDL/mixer"
 	"log"
 	"time"
 )
@@ -30,20 +31,25 @@ const (
 	BG_A      int = 0
 )
 
+type SoundPlayer func(string)
+
 type Game struct {
-	Controller *system.Controller
-	Maps       []string
-	Level      *Level
-	Overlay    *OverlayMenu
-	Billboard  *BillboardMenu
-	Font       *system.Font
-	Menu       Menu
-	menus      map[string]Menu
-	MenuPaths  map[string]string
-	LevelIndex int
-	Render     bool
-	Camera     *Camera
-	exit       chan bool
+	Controller  *system.Controller
+	SoundSystem *system.Sound
+	Maps        []string
+	SoundPaths  map[string]string
+	sounds      map[string]*mixer.Chunk
+	Level       *Level
+	Overlay     *OverlayMenu
+	Billboard   *BillboardMenu
+	Font        *system.Font
+	Menu        Menu
+	menus       map[string]Menu
+	MenuPaths   map[string]string
+	LevelIndex  int
+	Render      bool
+	Camera      *Camera
+	exit        chan bool
 }
 
 func NewGame(ctrl *system.Controller) (game *Game, err error) {
@@ -52,6 +58,10 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 		Maps: []string{
 			"data/level01.json",
 			"data/level02.json",
+			"data/level03.json",
+		},
+		SoundPaths: map[string]string{
+			"explosion": "data/explosion.wav",
 		},
 		MenuPaths: map[string]string{
 			"splash": "data/menu_splash.json",
@@ -63,6 +73,9 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	game.Controller.SetClearColor(BG_R, BG_G, BG_B, BG_A)
 	game.handleKeys()
 	game.handleClose()
+	if game.SoundSystem, err = system.NewSound(); err != nil {
+		return
+	}
 	if err = game.loadMenus(); err != nil {
 		return
 	}
@@ -75,11 +88,21 @@ func NewGame(ctrl *system.Controller) (game *Game, err error) {
 	if game.Billboard, err = LoadBillboardMenu("data/menu_billboard.json", game.handleMenu); err != nil {
 		return
 	}
+	if err = game.loadSounds(); err != nil {
+		return
+	}
 	if err = game.setLevel(); err != nil {
+		return
+	}
+	if err = game.SoundSystem.PlayMusic("data/music.ogg"); err != nil {
 		return
 	}
 	game.setMenu("splash")
 	return
+}
+
+func (g *Game) Terminate() {
+	g.SoundSystem.Terminate()
 }
 
 func (g *Game) handleClose() {
@@ -133,8 +156,12 @@ func (g *Game) handleMenuKeys(key int, state int) {
 		g.Menu.Choose()
 	case state == 1 && key == system.KeyEnter:
 		g.Menu.Choose()
+	case state == 1 && key == system.KeyUp:
+		fallthrough
 	case state == 1 && key == system.KeyLeft:
 		g.Menu.SelectPrev()
+	case state == 1 && key == system.KeyDown:
+		fallthrough
 	case state == 1 && key == system.KeyRight:
 		g.Menu.SelectNext()
 	}
@@ -155,8 +182,8 @@ func (g *Game) handleGameKeys(key int, state int) {
 		g.Level.Player.SetDirection(RIGHT)
 		g.Level.Player.SetMovement(WALKING)
 	case state == 1 && key == 87: //w
-		log.Printf("Autowin\n")
-		g.Level.Won = true
+		//log.Printf("Autowin\n")
+		//g.Level.Won = true
 	case state == 1 && key == system.KeySpace:
 		g.Level.AddBombFromActor(g.Level.Player.Actor)
 	case state == 0:
@@ -181,7 +208,9 @@ func (g *Game) setLevel() (err error) {
 	if cast, err = g.getCast("data/actors.png", 32, 64); err != nil {
 		return
 	}
-	if g.Level, err = LoadLevel(path, cast); err != nil {
+	if g.Level, err = LoadLevel(path, cast, func(sound string) {
+		g.playSound(sound)
+	}); err != nil {
 		return
 	}
 	desc = g.Level.GetDescription()
@@ -202,6 +231,22 @@ func (g *Game) loadMenus() (err error) {
 		}
 	}
 	return
+}
+
+func (g *Game) loadSounds() (err error) {
+	g.sounds = map[string]*mixer.Chunk{}
+	for key, path := range g.SoundPaths {
+		if g.sounds[key], err = g.SoundSystem.GetEffect(path); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (g *Game) playSound(key string) {
+	if s, ok := g.sounds[key]; ok {
+		s.PlayChannel(-1, 0)
+	}
 }
 
 func (g *Game) setMenu(key string) (err error) {
@@ -254,10 +299,13 @@ func (g *Game) Run() (err error) {
 		default:
 		}
 		if g.Level.Died {
-			g.Menu = g.Billboard
-			g.Billboard.SetFrame(BILLBOARD_DIED)
+			g.Level.Died = false
+			time.AfterFunc(time.Duration(200) * time.Millisecond, func() {
+				g.Menu = g.Billboard
+				g.Billboard.SetFrame(BILLBOARD_DIED)
+			})
 		} else if g.Level.Won {
-			if g.LevelIndex == len(g.Maps) - 1{
+			if g.LevelIndex == len(g.Maps)-1 {
 				g.Menu = g.Billboard
 				g.Billboard.SetFrame(BILLBOARD_WON)
 			} else {
