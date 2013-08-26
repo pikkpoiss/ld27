@@ -18,7 +18,6 @@ import (
 	"./system"
 	"fmt"
 	"github.com/banthar/Go-SDL/mixer"
-	"log"
 	"time"
 )
 
@@ -290,6 +289,9 @@ func (g *Game) Run() (err error) {
 		PaintCast(g.Controller, g.Level.Cast)
 		if g.Menu != nil {
 			PaintMenu(g.Controller, g.Menu)
+			g.Level.Paused = true
+		} else {
+			g.Level.Paused = false
 		}
 		EndPaint()
 		select {
@@ -300,7 +302,7 @@ func (g *Game) Run() (err error) {
 		}
 		if g.Level.Died {
 			g.Level.Died = false
-			time.AfterFunc(time.Duration(200) * time.Millisecond, func() {
+			time.AfterFunc(time.Duration(200)*time.Millisecond, func() {
 				g.Menu = g.Billboard
 				g.Billboard.SetFrame(BILLBOARD_DIED)
 			})

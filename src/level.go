@@ -37,6 +37,7 @@ type Level struct {
 	TileHeight int
 	Won        bool
 	Died       bool
+	Paused     bool
 }
 
 func LoadLevel(path string, cast *Cast, snd SoundPlayer) (out *Level, err error) {
@@ -59,6 +60,7 @@ func LoadLevel(path string, cast *Cast, snd SoundPlayer) (out *Level, err error)
 		Camera:     NewCamera(0, 0, cw, ch),
 		TileWidth:  tm.Tilewidth,
 		TileHeight: tm.Tileheight,
+		Paused:     false,
 		Won:        false,
 		Died:       false,
 		tiles:      make([]Tile, count),
@@ -77,6 +79,9 @@ func LoadLevel(path string, cast *Cast, snd SoundPlayer) (out *Level, err error)
 }
 
 func (l *Level) Update(diff time.Duration) (err error) {
+	if l.Paused {
+		return
+	}
 	var (
 		layer *system.TiledLayer
 	)
